@@ -7,13 +7,21 @@ import { ThemeProvider } from "./contexts/ThemeContext";
 import DashboardLayout from "./components/DashboardLayout";
 import Home from "./pages/Home";
 import Search from "./pages/Search";
+import Favorites from "./pages/Favorites";
+import History from "./pages/History";
+import Recommendations from "./pages/Recommendations";
+import Proposals from "./pages/Proposals";
 
 function Router() {
   return (
     <DashboardLayout>
       <Switch>
         <Route path={"/"} component={Home} />
-        <Route path={"/search"} component={Search} />
+        <Route path="/search" component={Search} />
+        <Route path="/favorites" component={Favorites} />
+        <Route path="/history" component={History} />
+        <Route path="/recommendations" component={Recommendations} />
+        <Route path="/proposals" component={Proposals} />
         <Route path={"/404"} component={NotFound} />
         {/* Final fallback route */}
         <Route component={NotFound} />
