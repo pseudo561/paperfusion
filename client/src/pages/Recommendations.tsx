@@ -4,24 +4,54 @@ import { trpc } from "@/lib/trpc";
 import { ExternalLink, Heart, Lightbulb, Loader2 } from "lucide-react";
 import { toast } from "sonner";
 
+function RecommendationFavoriteButton({ paperId, onToggle, isToggling }: {
+  paperId: string;
+  onToggle: (paperId: string) => void;
+  isToggling: boolean;
+}) {
+  const { data: favoriteStatus } = trpc.favorites.checkFavorite.useQuery(
+    { paperId },
+    { enabled: !!paperId }
+  );
+
+  const isFavorite = favoriteStatus?.isFavorite || false;
+
+  return (
+    <Button
+      variant="ghost"
+      size="icon"
+      onClick={() => onToggle(paperId)}
+      disabled={isToggling}
+      className={isFavorite ? "text-red-500 hover:text-red-600" : ""}
+    >
+      <Heart className={`w-5 h-5 ${isFavorite ? "fill-current" : ""}`} />
+    </Button>
+  );
+}
+
 export default function Recommendations() {
   const utils = trpc.useUtils();
   const { data: recommendations, isLoading } = trpc.recommendations.getForUser.useQuery({
     limit: 10,
   });
 
-  const addFavoriteMutation = trpc.favorites.add.useMutation({
-    onSuccess: () => {
+  const toggleFavoriteMutation = trpc.favorites.toggle.useMutation({
+    onSuccess: (data) => {
       utils.favorites.getUserFavorites.invalidate();
-      toast.success("お気に入りに追加しました");
+      utils.favorites.checkFavorite.invalidate();
+      if (data.action === 'added') {
+        toast.success("お気に入りに追加しました");
+      } else {
+        toast.success("お気に入りから削除しました");
+      }
     },
     onError: () => {
-      toast.error("お気に入りの追加に失敗しました");
+      toast.error("操作に失敗しました");
     },
   });
 
-  const handleAddFavorite = (paperId: string) => {
-    addFavoriteMutation.mutate({ paperId });
+  const handleToggleFavorite = (paperId: string) => {
+    toggleFavoriteMutation.mutate({ paperId });
   };
 
   if (isLoading) {
@@ -61,14 +91,11 @@ export default function Recommendations() {
                         {paper.authors?.length > 3 && " ほか"}
                       </CardDescription>
                     </div>
-                    <Button
-                      variant="ghost"
-                      size="icon"
-                      onClick={() => handleAddFavorite(paper.paperId)}
-                      disabled={addFavoriteMutation.isPending}
-                    >
-                      <Heart className="w-5 h-5" />
-                    </Button>
+                    <RecommendationFavoriteButton
+                      paperId={paper.paperId}
+                      onToggle={handleToggleFavorite}
+                      isToggling={toggleFavoriteMutation.isPending}
+                    />
                   </div>
                 </CardHeader>
                 <CardContent className="space-y-3">
@@ -91,11 +118,16 @@ export default function Recommendations() {
                   </div>
 
                   {paper.url && (
-                    <Button variant="outline" size="sm" asChild>
-                      <a href={paper.url} target="_blank" rel="noopener noreferrer">
-                        <ExternalLink className="w-4 h-4 mr-2" />
-                        詳細を見る
-                      </a>
+                    <Button
+                      variant="outline"
+                      size="sm"
+                      onClick={() => {
+                        const viewerUrl = `/viewer?url=${encodeURIComponent(paper.url)}&title=${encodeURIComponent(paper.title)}`;
+                        window.location.href = viewerUrl;
+                      }}
+                    >
+                      <ExternalLink className="w-4 h-4 mr-2" />
+                      PDFを開く
                     </Button>
                   )}
                 </CardContent>

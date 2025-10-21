@@ -3,7 +3,7 @@ import { getSessionCookieOptions } from "./_core/cookies";
 import { systemRouter } from "./_core/systemRouter";
 import { publicProcedure, protectedProcedure, router } from "./_core/trpc";
 import { getDb } from "./db";
-import { favorites } from "../drizzle/schema";
+import { favorites, userRatings } from "../drizzle/schema";
 import { and, eq } from "drizzle-orm";
 import { z } from "zod";
 
@@ -337,37 +337,45 @@ export const appRouter = router({
     getForUser: protectedProcedure
       .input(z.object({ limit: z.number().default(10) }))
       .query(async ({ input, ctx }) => {
-        const { getUserFavorites, getUserRatings } = await import("./db");
+        const db = await getDb();
+        if (!db) return [];
+
         const { getRecommendedPapers } = await import("./services/semanticScholar");
         
-        const [favorites, ratings] = await Promise.all([
-          getUserFavorites(ctx.user.id),
-          getUserRatings(ctx.user.id),
+        // お気に入りと評価を取得
+        const [favoritesData, ratingsData] = await Promise.all([
+          db.select().from(favorites).where(eq(favorites.userId, ctx.user.id)),
+          db.select().from(userRatings).where(eq(userRatings.userId, ctx.user.id)),
         ]);
 
-        const likedPapers = ratings
+        const likedPapers = ratingsData
           .filter(r => r.rating === 1)
           .map(r => r.paperId);
 
-        const sourcePaperIds = Array.from(new Set([...favorites.map(f => f.paperId), ...likedPapers]));
+        const sourcePaperIds = Array.from(new Set([...favoritesData.map(f => f.paperId), ...likedPapers]));
 
         if (sourcePaperIds.length === 0) {
           return [];
         }
 
-        const recommendations = await Promise.all(
-          sourcePaperIds.slice(0, 3).map(paperId => 
-            getRecommendedPapers(paperId, Math.ceil(input.limit / 3))
-          )
-        );
+        try {
+          const recommendations = await Promise.all(
+            sourcePaperIds.slice(0, 3).map(paperId => 
+              getRecommendedPapers(paperId, Math.ceil(input.limit / 3))
+            )
+          );
 
-        const uniqueRecommendations = Array.from(
-          new Map(
-            recommendations.flat().map(p => [p.paperId, p])
-          ).values()
-        ).slice(0, input.limit);
+          const uniqueRecommendations = Array.from(
+            new Map(
+              recommendations.flat().map(p => [p.paperId, p])
+            ).values()
+          ).slice(0, input.limit);
 
-        return uniqueRecommendations;
+          return uniqueRecommendations;
+        } catch (error) {
+          console.error("Failed to get recommendations:", error);
+          return [];
+        }
       }),
   }),
 });
