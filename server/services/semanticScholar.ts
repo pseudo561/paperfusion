@@ -111,8 +111,25 @@ export async function getRecommendedPapers(
   limit = 10
 ): Promise<SemanticScholarPaper[]> {
   try {
+    // まずSemantic Scholar IDを取得
+    let semanticScholarId = paperId;
+    
+    // arXiv IDの場合は変換
+    if (paperId.includes('v') || paperId.match(/^\d{4}\.\d{5}$/)) {
+      const arxivId = paperId.replace(/v\d+$/, ''); // v1等のバージョンを削除
+      const paperResponse = await axios.get(
+        `${SEMANTIC_SCHOLAR_API_BASE}/paper/ARXIV:${arxivId}?fields=paperId`
+      );
+      semanticScholarId = paperResponse.data?.paperId;
+      if (!semanticScholarId) {
+        console.error(`Could not find Semantic Scholar ID for arXiv:${arxivId}`);
+        return [];
+      }
+    }
+
+    // 正しいエンドポイントを使用
     const response = await axios.get(
-      `${SEMANTIC_SCHOLAR_API_BASE}/paper/${paperId}/recommendations?fields=${DEFAULT_FIELDS}&limit=${limit}`
+      `https://api.semanticscholar.org/recommendations/v1/papers/forpaper/${semanticScholarId}?fields=${DEFAULT_FIELDS}&limit=${limit}`
     );
 
     return response.data?.recommendedPapers || [];
