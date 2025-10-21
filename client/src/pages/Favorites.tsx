@@ -10,10 +10,14 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from 
 
 function RelatedPapersButton({ paperId }: { paperId: string }) {
   const [showRelated, setShowRelated] = useState(false);
-  const { data: citations, isLoading } = trpc.papers.getCitations.useQuery(
+  const { data: citations, isLoading, error } = trpc.papers.getCitations.useQuery(
     { paperId },
     { enabled: showRelated }
   );
+
+  const hasCitations = citations?.citations && citations.citations.length > 0;
+  const hasReferences = citations?.references && citations.references.length > 0;
+  const hasAnyRelated = hasCitations || hasReferences;
 
   return (
     <>
@@ -36,22 +40,63 @@ function RelatedPapersButton({ paperId }: { paperId: string }) {
         )}
       </Button>
       
-      {showRelated && citations && citations.citations && citations.citations.length > 0 && (
-        <div className="mt-4 p-4 bg-muted rounded-lg space-y-2 w-full">
-          <h4 className="font-medium text-sm">関連論文 ({citations.citations.length}件)</h4>
-          <div className="space-y-2 max-h-60 overflow-y-auto">
-            {citations.citations.slice(0, 5).map((paper: any, index: number) => (
-              <div key={index} className="text-sm p-2 bg-background rounded border">
-                <p className="font-medium">{paper.title}</p>
-                {paper.authors && (
-                  <p className="text-xs text-muted-foreground mt-1">
-                    {paper.authors.slice(0, 2).map((a: any) => a.name).join(", ")}
-                    {paper.authors.length > 2 && " ほか"}
-                  </p>
-                )}
+      {showRelated && !isLoading && (
+        <div className="mt-4 p-4 bg-muted rounded-lg space-y-3 w-full">
+          {error && (
+            <p className="text-sm text-destructive">
+              関連論文の取得に失敗しました
+            </p>
+          )}
+          
+          {!error && !hasAnyRelated && (
+            <p className="text-sm text-muted-foreground">
+              関連論文が見つかりませんでした
+            </p>
+          )}
+          
+          {hasCitations && (
+            <div className="space-y-2">
+              <h4 className="font-medium text-sm">この論文を引用している論文 ({citations.citations.length}件)</h4>
+              <div className="space-y-2 max-h-60 overflow-y-auto">
+                {citations.citations.slice(0, 5).map((paper: any, index: number) => (
+                  <div key={index} className="text-sm p-2 bg-background rounded border">
+                    <p className="font-medium">{paper.title}</p>
+                    {paper.authors && (
+                      <p className="text-xs text-muted-foreground mt-1">
+                        {paper.authors.slice(0, 2).map((a: any) => a.name).join(", ")}
+                        {paper.authors.length > 2 && " ほか"}
+                      </p>
+                    )}
+                    {paper.year && (
+                      <p className="text-xs text-muted-foreground">{paper.year}年</p>
+                    )}
+                  </div>
+                ))}
               </div>
-            ))}
-          </div>
+            </div>
+          )}
+          
+          {hasReferences && (
+            <div className="space-y-2">
+              <h4 className="font-medium text-sm">この論文が引用している論文 ({citations.references.length}件)</h4>
+              <div className="space-y-2 max-h-60 overflow-y-auto">
+                {citations.references.slice(0, 5).map((paper: any, index: number) => (
+                  <div key={index} className="text-sm p-2 bg-background rounded border">
+                    <p className="font-medium">{paper.title}</p>
+                    {paper.authors && (
+                      <p className="text-xs text-muted-foreground mt-1">
+                        {paper.authors.slice(0, 2).map((a: any) => a.name).join(", ")}
+                        {paper.authors.length > 2 && " ほか"}
+                      </p>
+                    )}
+                    {paper.year && (
+                      <p className="text-xs text-muted-foreground">{paper.year}年</p>
+                    )}
+                  </div>
+                ))}
+              </div>
+            </div>
+          )}
         </div>
       )}
     </>

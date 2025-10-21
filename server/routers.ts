@@ -107,11 +107,28 @@ export const appRouter = router({
     getCitations: publicProcedure
       .input(z.object({ paperId: z.string() }))
       .query(async ({ input }) => {
-        const { getPaperCitations, getPaperReferences } = await import("./services/semanticScholar");
+        const { getPaperCitations, getPaperReferences, searchPapersByArxivId } = await import("./services/semanticScholar");
+        
+        let semanticScholarId = input.paperId;
+        
+        // arXiv IDの場合はSemantic Scholar IDに変換
+        if (input.paperId.includes('v') || input.paperId.match(/^\d{4}\.\d{5}$/)) {
+          const arxivId = input.paperId.replace(/v\d+$/, ''); // v1等のバージョンを削除
+          const paper = await searchPapersByArxivId(arxivId);
+          if (paper?.paperId) {
+            semanticScholarId = paper.paperId;
+          } else {
+            // Semantic Scholar IDが見つからない場合は空の結果を返す
+            return {
+              citations: [],
+              references: [],
+            };
+          }
+        }
         
         const [citations, references] = await Promise.all([
-          getPaperCitations(input.paperId),
-          getPaperReferences(input.paperId),
+          getPaperCitations(semanticScholarId),
+          getPaperReferences(semanticScholarId),
         ]);
 
         return {
