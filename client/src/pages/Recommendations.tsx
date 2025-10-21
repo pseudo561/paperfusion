@@ -3,6 +3,7 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/com
 import { trpc } from "@/lib/trpc";
 import { ExternalLink, Heart, Lightbulb, Loader2 } from "lucide-react";
 import { toast } from "sonner";
+import { useEffect, useState } from "react";
 
 function RecommendationFavoriteButton({ paperId, onToggle, isToggling }: {
   paperId: string;
@@ -31,9 +32,18 @@ function RecommendationFavoriteButton({ paperId, onToggle, isToggling }: {
 
 export default function Recommendations() {
   const utils = trpc.useUtils();
+  const [displayCount, setDisplayCount] = useState(10);
+  const [allRecommendations, setAllRecommendations] = useState<any[]>([]);
+
   const { data: recommendations, isLoading } = trpc.recommendations.getForUser.useQuery({
-    limit: 10,
+    limit: 50, // より多くの推薦を取得
   });
+
+  useEffect(() => {
+    if (recommendations) {
+      setAllRecommendations(recommendations);
+    }
+  }, [recommendations]);
 
   const toggleFavoriteMutation = trpc.favorites.toggle.useMutation({
     onSuccess: (data) => {
@@ -54,6 +64,10 @@ export default function Recommendations() {
     toggleFavoriteMutation.mutate({ paperId });
   };
 
+  const handleLoadMore = () => {
+    setDisplayCount((prev) => Math.min(prev + 10, allRecommendations.length));
+  };
+
   if (isLoading) {
     return (
       <div className="flex items-center justify-center py-12">
@@ -61,6 +75,9 @@ export default function Recommendations() {
       </div>
     );
   }
+
+  const displayedRecommendations = allRecommendations.slice(0, displayCount);
+  const hasMore = displayCount < allRecommendations.length;
 
   return (
     <div className="space-y-6">
@@ -71,14 +88,14 @@ export default function Recommendations() {
         </p>
       </div>
 
-      {recommendations && recommendations.length > 0 ? (
+      {allRecommendations && allRecommendations.length > 0 ? (
         <div className="space-y-4">
           <p className="text-sm text-muted-foreground">
-            {recommendations.length}件の推薦論文
+            {allRecommendations.length}件の推薦論文（{displayCount}件表示中）
           </p>
 
           <div className="space-y-4">
-            {recommendations.map((paper: any) => (
+            {displayedRecommendations.map((paper: any) => (
               <Card key={paper.paperId} className="hover:shadow-md transition-shadow">
                 <CardHeader>
                   <div className="flex items-start justify-between gap-4">
@@ -134,6 +151,25 @@ export default function Recommendations() {
               </Card>
             ))}
           </div>
+
+          {hasMore && (
+            <div className="text-center py-6">
+              <Button
+                variant="outline"
+                onClick={handleLoadMore}
+                className="w-full max-w-md"
+                size="lg"
+              >
+                さらに表示 ({allRecommendations.length - displayCount}件)
+              </Button>
+            </div>
+          )}
+
+          {!hasMore && allRecommendations.length > 10 && (
+            <p className="text-center text-sm text-muted-foreground py-4">
+              すべての推薦論文を表示しました
+            </p>
+          )}
         </div>
       ) : (
         <Card>
