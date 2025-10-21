@@ -2,6 +2,9 @@ import { COOKIE_NAME } from "@shared/const";
 import { getSessionCookieOptions } from "./_core/cookies";
 import { systemRouter } from "./_core/systemRouter";
 import { publicProcedure, protectedProcedure, router } from "./_core/trpc";
+import { getDb } from "./db";
+import { favorites } from "../drizzle/schema";
+import { and, eq } from "drizzle-orm";
 import { z } from "zod";
 
 export const appRouter = router({
@@ -175,18 +178,25 @@ export const appRouter = router({
 
   favorites: router({
     add: protectedProcedure
-      .input(z.object({ paperId: z.string() }))
+      .input(z.object({ paperId: z.string(), tags: z.array(z.string()).optional() }))
       .mutation(async ({ input, ctx }) => {
         const { addFavorite } = await import("./db");
         const { randomUUID } = await import("crypto");
         
-        await addFavorite({
-          id: randomUUID(),
-          userId: ctx.user.id,
-          paperId: input.paperId,
-        });
-
-        return { success: true };
+        try {
+          await addFavorite({
+            id: randomUUID(),
+            userId: ctx.user.id,
+            paperId: input.paperId,
+            tags: input.tags ? JSON.stringify(input.tags) : null,
+          });
+          return { success: true, action: 'added' as const };
+        } catch (error: any) {
+          if (error.code === 'ER_DUP_ENTRY') {
+            return { success: false, action: 'duplicate' as const };
+          }
+          throw error;
+        }
       }),
 
     remove: protectedProcedure
@@ -194,13 +204,89 @@ export const appRouter = router({
       .mutation(async ({ input, ctx }) => {
         const { removeFavorite } = await import("./db");
         await removeFavorite(ctx.user.id, input.paperId);
+        return { success: true, action: 'removed' as const };
+      }),
+
+    toggle: protectedProcedure
+      .input(z.object({ paperId: z.string(), tags: z.array(z.string()).optional() }))
+      .mutation(async ({ input, ctx }) => {
+        const db = await getDb();
+        if (!db) throw new Error("Database not available");
+        const { randomUUID } = await import("crypto");
+
+        const existing = await db
+          .select()
+          .from(favorites)
+          .where(and(eq(favorites.userId, ctx.user.id), eq(favorites.paperId, input.paperId)))
+          .limit(1);
+
+        if (existing.length > 0) {
+          await db
+            .delete(favorites)
+            .where(and(eq(favorites.userId, ctx.user.id), eq(favorites.paperId, input.paperId)));
+          return { success: true, action: 'removed' as const, isFavorite: false };
+        } else {
+          await db.insert(favorites).values({
+            id: randomUUID(),
+            userId: ctx.user.id,
+            paperId: input.paperId,
+            tags: input.tags ? JSON.stringify(input.tags) : null,
+          });
+          return { success: true, action: 'added' as const, isFavorite: true };
+        }
+      }),
+
+    checkFavorite: protectedProcedure
+      .input(z.object({ paperId: z.string() }))
+      .query(async ({ ctx, input }) => {
+        const db = await getDb();
+        if (!db) return { isFavorite: false };
+
+        const existing = await db
+          .select()
+          .from(favorites)
+          .where(and(eq(favorites.userId, ctx.user.id), eq(favorites.paperId, input.paperId)))
+          .limit(1);
+
+        return { isFavorite: existing.length > 0 };
+      }),
+
+    updateTags: protectedProcedure
+      .input(z.object({ paperId: z.string(), tags: z.array(z.string()) }))
+      .mutation(async ({ ctx, input }) => {
+        const db = await getDb();
+        if (!db) throw new Error("Database not available");
+
+        await db
+          .update(favorites)
+          .set({ tags: JSON.stringify(input.tags) })
+          .where(and(eq(favorites.userId, ctx.user.id), eq(favorites.paperId, input.paperId)));
+
         return { success: true };
       }),
 
     getUserFavorites: protectedProcedure
-      .query(async ({ ctx }) => {
-        const { getUserFavorites } = await import("./db");
-        return getUserFavorites(ctx.user.id);
+      .input(z.object({ tag: z.string().optional() }).optional())
+      .query(async ({ ctx, input }) => {
+        const db = await getDb();
+        if (!db) return [];
+
+        let query = db
+          .select()
+          .from(favorites)
+          .where(eq(favorites.userId, ctx.user.id));
+
+        const results = await query;
+
+        if (input?.tag) {
+          return results.filter(f => {
+            if (!f.tags) return false;
+            const tags = JSON.parse(f.tags as string);
+            return tags.includes(input.tag);
+          });
+        }
+
+        return results;
       }),
   }),
 

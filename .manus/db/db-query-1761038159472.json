@@ -1,0 +1,9 @@
+{
+  "query": "DELETE f1 FROM favorites f1\nINNER JOIN favorites f2 \nWHERE f1.id > f2.id \nAND f1.userId = f2.userId \nAND f1.paperId = f2.paperId;",
+  "command": "mysql --batch --raw --column-names --default-character-set=utf8mb4 --host gateway02.us-east-1.prod.aws.tidbcloud.com --port 4000 --user 2GBJjLSwKdAFJgM.root --database hpjFHhMYuRNtXjMLVLUfu8 --execute DELETE f1 FROM favorites f1\nINNER JOIN favorites f2 \nWHERE f1.id > f2.id \nAND f1.userId = f2.userId \nAND f1.paperId = f2.paperId;",
+  "rows": [],
+  "messages": [],
+  "stdout": "",
+  "stderr": "",
+  "execution_time_ms": 1618
+}

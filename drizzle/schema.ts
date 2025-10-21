@@ -1,4 +1,4 @@
-import { int, mysqlEnum, mysqlTable, text, timestamp, varchar } from "drizzle-orm/mysql-core";
+import { int, mysqlEnum, mysqlTable, text, timestamp, uniqueIndex, varchar } from "drizzle-orm/mysql-core";
 
 /**
  * Core user table backing auth flow.
@@ -65,8 +65,11 @@ export const favorites = mysqlTable("favorites", {
   id: varchar("id", { length: 64 }).primaryKey(),
   userId: varchar("userId", { length: 64 }).notNull(),
   paperId: varchar("paperId", { length: 64 }).notNull(),
+  tags: text("tags"), // JSON array of tags
   createdAt: timestamp("createdAt").defaultNow(),
-});
+}, (table) => ({
+  userPaperUnique: uniqueIndex("user_paper_unique").on(table.userId, table.paperId),
+}));
 
 export type Favorite = typeof favorites.$inferSelect;
 export type InsertFavorite = typeof favorites.$inferInsert;

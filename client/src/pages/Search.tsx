@@ -14,6 +14,7 @@ export default function Search() {
   const [shouldSearch, setShouldSearch] = useState(false);
   const [searchParams, setSearchParams] = useState<{ query: string; source: "arxiv" | "semantic_scholar" | "both"; limit: number }>({ query: "", source: "both", limit: 20 });
 
+  const utils = trpc.useUtils();
   const { data: searchResults, isLoading: isSearching } = trpc.papers.search.useQuery(
     searchParams,
     {
@@ -21,12 +22,17 @@ export default function Search() {
     }
   );
 
-  const addFavoriteMutation = trpc.favorites.add.useMutation({
-    onSuccess: () => {
-      toast.success("お気に入りに追加しました");
+  const toggleFavoriteMutation = trpc.favorites.toggle.useMutation({
+    onSuccess: (data) => {
+      utils.favorites.getUserFavorites.invalidate();
+      if (data.action === 'added') {
+        toast.success("お気に入りに追加しました");
+      } else {
+        toast.success("お気に入りから削除しました");
+      }
     },
     onError: () => {
-      toast.error("お気に入りの追加に失敗しました");
+      toast.error("操作に失敗しました");
     },
   });
 
@@ -44,8 +50,8 @@ export default function Search() {
     setShouldSearch(true);
   };
 
-  const handleAddFavorite = (paperId: string) => {
-    addFavoriteMutation.mutate({ paperId });
+  const handleToggleFavorite = (paperId: string) => {
+    toggleFavoriteMutation.mutate({ paperId });
   };
 
   return (
@@ -117,70 +123,12 @@ export default function Search() {
 
           <div className="space-y-4">
             {searchResults.map((paper: any, index: number) => (
-              <Card key={paper.id || index} className="hover:shadow-md transition-shadow">
-                <CardHeader>
-                  <div className="flex items-start justify-between gap-4">
-                    <div className="flex-1 min-w-0">
-                      <CardTitle className="text-lg leading-tight">
-                        {paper.title}
-                      </CardTitle>
-                      <CardDescription className="mt-2">
-                        {Array.isArray(paper.authors)
-                          ? paper.authors.slice(0, 3).join(", ")
-                          : "著者不明"}
-                        {Array.isArray(paper.authors) && paper.authors.length > 3 && " ほか"}
-                      </CardDescription>
-                    </div>
-                    <Button
-                      variant="ghost"
-                      size="icon"
-                      onClick={() => handleAddFavorite(paper.id)}
-                      disabled={addFavoriteMutation.isPending}
-                    >
-                      <Heart className="w-5 h-5" />
-                    </Button>
-                  </div>
-                </CardHeader>
-                <CardContent className="space-y-3">
-                  {paper.abstract && (
-                    <p className="text-sm text-muted-foreground line-clamp-3">
-                      {paper.abstract}
-                    </p>
-                  )}
-
-                  <div className="flex items-center gap-4 text-sm text-muted-foreground">
-                    {paper.publishedDate && (
-                      <span>
-                        {new Date(paper.publishedDate).toLocaleDateString("ja-JP")}
-                      </span>
-                    )}
-                    {paper.citationsCount !== undefined && (
-                      <span>引用数: {paper.citationsCount}</span>
-                    )}
-                    {paper.categories && Array.isArray(paper.categories) && (
-                      <span className="flex gap-1 flex-wrap">
-                        {paper.categories.slice(0, 2).map((cat: string, i: number) => (
-                          <span
-                            key={i}
-                            className="px-2 py-0.5 bg-accent text-accent-foreground rounded text-xs"
-                          >
-                            {cat}
-                          </span>
-                        ))}
-                      </span>
-                    )}
-                  </div>
-
-                  {paper.pdfUrl && (
-                    <Button variant="outline" size="sm" asChild>
-                      <a href={paper.pdfUrl} target="_blank" rel="noopener noreferrer">
-                        <ExternalLink className="w-4 h-4 mr-2" />
-                        PDFを開く
-                      </a>
-                    </Button>
-                  )}
-                </CardContent>
-              </Card>
+              <PaperCard
+                key={paper.id || index}
+                paper={paper}
+                onToggleFavorite={handleToggleFavorite}
+                isTogglingFavorite={toggleFavoriteMutation.isPending}
+              />
             ))}
           </div>
         </div>
@@ -207,6 +155,87 @@ export default function Search() {
         </Card>
       )}
     </div>
+  );
+}
+
+function PaperCard({ paper, onToggleFavorite, isTogglingFavorite }: {
+  paper: any;
+  onToggleFavorite: (paperId: string) => void;
+  isTogglingFavorite: boolean;
+}) {
+  const { data: favoriteStatus } = trpc.favorites.checkFavorite.useQuery(
+    { paperId: paper.id },
+    { enabled: !!paper.id }
+  );
+
+  const isFavorite = favoriteStatus?.isFavorite || false;
+
+  return (
+    <Card className="hover:shadow-md transition-shadow">
+      <CardHeader>
+        <div className="flex items-start justify-between gap-4">
+          <div className="flex-1 min-w-0">
+            <CardTitle className="text-lg leading-tight">
+              {paper.title}
+            </CardTitle>
+            <CardDescription className="mt-2">
+              {Array.isArray(paper.authors)
+                ? paper.authors.slice(0, 3).join(", ")
+                : "著者不明"}
+              {Array.isArray(paper.authors) && paper.authors.length > 3 && " ほか"}
+            </CardDescription>
+          </div>
+          <Button
+            variant="ghost"
+            size="icon"
+            onClick={() => onToggleFavorite(paper.id)}
+            disabled={isTogglingFavorite}
+            className={isFavorite ? "text-red-500 hover:text-red-600" : ""}
+          >
+            <Heart className={`w-5 h-5 ${isFavorite ? "fill-current" : ""}`} />
+          </Button>
+        </div>
+      </CardHeader>
+      <CardContent className="space-y-3">
+        {paper.abstract && (
+          <p className="text-sm text-muted-foreground line-clamp-3">
+            {paper.abstract}
+          </p>
+        )}
+
+        <div className="flex items-center gap-4 text-sm text-muted-foreground flex-wrap">
+          {paper.publishedDate && (
+            <span>
+              {new Date(paper.publishedDate).toLocaleDateString("ja-JP")}
+            </span>
+          )}
+          {paper.citationsCount !== undefined && (
+            <span>引用数: {paper.citationsCount}</span>
+          )}
+          {paper.categories && Array.isArray(paper.categories) && (
+            <span className="flex gap-1 flex-wrap">
+              {paper.categories.slice(0, 2).map((cat: string, i: number) => (
+                <span
+                  key={i}
+                  className="px-2 py-0.5 bg-accent text-accent-foreground rounded text-xs"
+                >
+                  {cat}
+                </span>
+              ))}
+            </span>
+          )}
+        </div>
+
+        {paper.pdfUrl && (
+          <Button variant="outline" size="sm" asChild>
+            <a href={paper.pdfUrl} target="_blank" rel="noopener noreferrer">
+              <ExternalLink className="w-4 h-4 mr-2" />
+              PDFを開く
+            </a>
+          </Button>
+        )}
+      </CardContent>
+    </Card>
   );
 }
 

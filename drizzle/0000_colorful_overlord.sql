@@ -2,8 +2,10 @@ CREATE TABLE `favorites` (
 	`id` varchar(64) NOT NULL,
 	`userId` varchar(64) NOT NULL,
 	`paperId` varchar(64) NOT NULL,
+	`tags` text,
 	`createdAt` timestamp DEFAULT (now()),
-	CONSTRAINT `favorites_id` PRIMARY KEY(`id`)
+	CONSTRAINT `favorites_id` PRIMARY KEY(`id`),
+	CONSTRAINT `user_paper_unique` UNIQUE(`userId`,`paperId`)
 );
 --> statement-breakpoint
 CREATE TABLE `paperSummaries` (
@@ -40,6 +42,28 @@ CREATE TABLE `papers` (
 	CONSTRAINT `papers_id` PRIMARY KEY(`id`)
 );
 --> statement-breakpoint
+CREATE TABLE `researchProposals` (
+	`id` varchar(64) NOT NULL,
+	`userId` varchar(64) NOT NULL,
+	`title` text NOT NULL,
+	`description` text NOT NULL,
+	`sourcePaperIds` text NOT NULL,
+	`openProblems` text,
+	`createdAt` timestamp DEFAULT (now()),
+	CONSTRAINT `researchProposals_id` PRIMARY KEY(`id`)
+);
+--> statement-breakpoint
+CREATE TABLE `surveyReports` (
+	`id` varchar(64) NOT NULL,
+	`userId` varchar(64) NOT NULL,
+	`proposalId` varchar(64),
+	`title` text NOT NULL,
+	`content` text NOT NULL,
+	`relatedPaperIds` text,
+	`createdAt` timestamp DEFAULT (now()),
+	CONSTRAINT `surveyReports_id` PRIMARY KEY(`id`)
+);
+--> statement-breakpoint
 CREATE TABLE `userHistory` (
 	`id` varchar(64) NOT NULL,
 	`userId` varchar(64) NOT NULL,
@@ -56,4 +80,15 @@ CREATE TABLE `userRatings` (
 	`rating` int NOT NULL,
 	`createdAt` timestamp DEFAULT (now()),
 	CONSTRAINT `userRatings_id` PRIMARY KEY(`id`)
+);
+--> statement-breakpoint
+CREATE TABLE `users` (
+	`id` varchar(64) NOT NULL,
+	`name` text,
+	`email` varchar(320),
+	`loginMethod` varchar(64),
+	`role` enum('user','admin') NOT NULL DEFAULT 'user',
+	`createdAt` timestamp DEFAULT (now()),
+	`lastSignedIn` timestamp DEFAULT (now()),
+	CONSTRAINT `users_id` PRIMARY KEY(`id`)
 );
