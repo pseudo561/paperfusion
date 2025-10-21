@@ -3,6 +3,7 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/com
 import { Checkbox } from "@/components/ui/checkbox";
 import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { trpc } from "@/lib/trpc";
+import { getLanguage } from "@/lib/i18n";
 import { FileText, Lightbulb, Loader2, Plus, Sparkles, Trash2 } from "lucide-react";
 import { useState } from "react";
 import { toast } from "sonner";
@@ -53,7 +54,10 @@ export default function Proposals() {
     }
 
     setIsGenerating(true);
-    generateProposal.mutate({ paperIds: selectedPapers });
+    generateProposal.mutate({ 
+      paperIds: selectedPapers,
+      language: getLanguage()
+    });
   };
 
   const handleTogglePaper = (paperId: string) => {

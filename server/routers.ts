@@ -315,21 +315,50 @@ export const appRouter = router({
       }),
 
     generateTags: protectedProcedure
-      .input(z.object({ paperId: z.string(), title: z.string(), abstract: z.string().optional() }))
+      .input(z.object({ 
+        paperId: z.string(), 
+        title: z.string(), 
+        abstract: z.string().optional(),
+        language: z.enum(['ja', 'en', 'zh']).optional().default('en')
+      }))
       .mutation(async ({ ctx, input }) => {
         const { invokeLLM } = await import("./_core/llm");
         
-        const prompt = `以下の論文のタイトルと要約から、適切なタグを3-5個生成してください。タグは日本語で、カンマ区切りで返してください。
+        const prompts = {
+          ja: `以下の論文のタイトルと要約から、適切なタグを3-5個生成してください。タグは日本語で、カンマ区切りで返してください。
 
 タイトル: ${input.title}
 要約: ${input.abstract || '要約なし'}
 
-タグ（カンマ区切り）:`;
+タグ（カンマ区切り）:`,
+          en: `Generate 3-5 appropriate tags from the following paper title and abstract. Return tags in English, separated by commas.
+
+Title: ${input.title}
+Abstract: ${input.abstract || 'No abstract'}
+
+Tags (comma-separated):`,
+          zh: `从以下论文标题和摘要生成3-5个适当的标签。请用中文返回标签，用逗号分隔。
+
+标题: ${input.title}
+摘要: ${input.abstract || '无摘要'}
+
+标签（逗号分隔）:`
+        };
+        
+        const systemMessages = {
+          ja: "あなたは学術論文の分類を支援するAIアシスタントです。",
+          en: "You are an AI assistant that helps classify academic papers.",
+          zh: "你是一个帮助分类学术论文的AI助手。"
+        };
+        
+        const lang = input.language || 'en';
+        const prompt = prompts[lang];
+        const systemMessage = systemMessages[lang];
 
         try {
           const response = await invokeLLM({
             messages: [
-              { role: "system", content: "あなたは学術論文の分類を支援するAIアシスタントです。" },
+              { role: "system", content: systemMessage },
               { role: "user", content: prompt },
             ],
           });
@@ -463,6 +492,7 @@ export const appRouter = router({
     generate: protectedProcedure
       .input(z.object({
         paperIds: z.array(z.string()),
+        language: z.enum(['ja', 'en', 'zh']).optional().default('en')
       }))
       .mutation(async ({ ctx, input }) => {
         const db = await getDb();
@@ -484,7 +514,10 @@ export const appRouter = router({
           `Title: ${p.title}\nAuthors: ${p.authors}\nAbstract: ${p.abstract || "N/A"}`
         ).join("\n\n---\n\n");
 
-        const proposalPrompt = `以下の論文を分析して、新しい研究テーマを提案してください。
+        const lang = input.language || 'en';
+        
+        const prompts = {
+          ja: `以下の論文を分析して、新しい研究テーマを提案してください。
 
 ${paperSummaries}
 
@@ -492,11 +525,39 @@ ${paperSummaries}
 1. 研究テーマのタイトル（簡潔に）
 2. 提案内容（詳細な説明、300-500字程度）
 3. 関連するオープンプロブレム（3-5個）
-4. 研究の方向性と期待される貢献`;
+4. 研究の方向性と期待される貢献`,
+          en: `Analyze the following papers and propose a new research theme.
+
+${paperSummaries}
+
+Please respond in the following format:
+1. Research Theme Title (concise)
+2. Proposal Content (detailed explanation, 300-500 words)
+3. Related Open Problems (3-5 items)
+4. Research Direction and Expected Contributions`,
+          zh: `分析以下论文并提出新的研究主题。
+
+${paperSummaries}
+
+请按以下格式回答：
+1. 研究主题标题（简洁）
+2. 提案内容（详细说明，300-500字）
+3. 相关开放问题（3-5个）
+4. 研究方向和预期贡献`
+        };
+        
+        const systemMessages = {
+          ja: "あなたは研究者を支援するAIアシスタントです。論文を分析し、新しい研究テーマを提案します。",
+          en: "You are an AI assistant that helps researchers. You analyze papers and propose new research themes.",
+          zh: "你是一个帮助研究人员的AI助手。你分析论文并提出新的研究主题。"
+        };
+        
+        const proposalPrompt = prompts[lang];
+        const systemMessage = systemMessages[lang];
 
         const response = await invokeLLM({
           messages: [
-            { role: "system", content: "あなたは研究者を支援するAIアシスタントです。論文を分析し、新しい研究テーマを提案します。" },
+            { role: "system", content: systemMessage },
             { role: "user", content: proposalPrompt },
           ],
         });

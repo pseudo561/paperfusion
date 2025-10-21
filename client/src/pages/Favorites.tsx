@@ -3,6 +3,7 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/com
 import { Input } from "@/components/ui/input";
 import { Badge } from "@/components/ui/badge";
 import { trpc } from "@/lib/trpc";
+import { getLanguage } from "@/lib/i18n";
 import { ExternalLink, Heart, Loader2, Trash2, Tag, X, Plus, Sparkles, Search } from "lucide-react";
 import { useState } from "react";
 import { toast } from "sonner";
@@ -211,6 +212,7 @@ export default function Favorites() {
                         paperId: favorite.paperId,
                         title: paperData.title,
                         abstract: paperData.abstract || undefined,
+                        language: getLanguage(),
                       });
                       successCount++;
                     }
