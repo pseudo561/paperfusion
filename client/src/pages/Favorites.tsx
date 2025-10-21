@@ -3,13 +3,64 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/com
 import { Input } from "@/components/ui/input";
 import { Badge } from "@/components/ui/badge";
 import { trpc } from "@/lib/trpc";
-import { ExternalLink, Heart, Loader2, Trash2, Tag, X, Plus } from "lucide-react";
+import { ExternalLink, Heart, Loader2, Trash2, Tag, X, Plus, Sparkles, Search } from "lucide-react";
 import { useState } from "react";
 import { toast } from "sonner";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
 
+function RelatedPapersButton({ paperId }: { paperId: string }) {
+  const [showRelated, setShowRelated] = useState(false);
+  const { data: citations, isLoading } = trpc.papers.getCitations.useQuery(
+    { paperId },
+    { enabled: showRelated }
+  );
+
+  return (
+    <>
+      <Button
+        variant="outline"
+        size="sm"
+        onClick={() => setShowRelated(!showRelated)}
+        disabled={isLoading}
+      >
+        {isLoading ? (
+          <>
+            <Loader2 className="w-4 h-4 mr-2 animate-spin" />
+            検索中...
+          </>
+        ) : (
+          <>
+            <Search className="w-4 h-4 mr-2" />
+            {showRelated ? "関連論文を閉じる" : "関連論文を検索"}
+          </>
+        )}
+      </Button>
+      
+      {showRelated && citations && citations.citations && citations.citations.length > 0 && (
+        <div className="mt-4 p-4 bg-muted rounded-lg space-y-2 w-full">
+          <h4 className="font-medium text-sm">関連論文 ({citations.citations.length}件)</h4>
+          <div className="space-y-2 max-h-60 overflow-y-auto">
+            {citations.citations.slice(0, 5).map((paper: any, index: number) => (
+              <div key={index} className="text-sm p-2 bg-background rounded border">
+                <p className="font-medium">{paper.title}</p>
+                {paper.authors && (
+                  <p className="text-xs text-muted-foreground mt-1">
+                    {paper.authors.slice(0, 2).map((a: any) => a.name).join(", ")}
+                    {paper.authors.length > 2 && " ほか"}
+                  </p>
+                )}
+              </div>
+            ))}
+          </div>
+        </div>
+      )}
+    </>
+  );
+}
+
 export default function Favorites() {
   const [selectedTag, setSelectedTag] = useState<string | undefined>(undefined);
+  const [isBulkGenerating, setIsBulkGenerating] = useState(false);
   const utils = trpc.useUtils();
   
   const { data: favorites, isLoading } = trpc.favorites.getUserFavorites.useQuery(
@@ -95,9 +146,59 @@ export default function Favorites() {
 
       {favorites && favorites.length > 0 ? (
         <div className="space-y-4">
-          <p className="text-sm text-muted-foreground">
-            {favorites.length}件の論文を保存しています
-          </p>
+          <div className="flex items-center justify-between">
+            <p className="text-sm text-muted-foreground">
+              {favorites.length}件の論文を保存しています
+            </p>
+            <Button
+              variant="outline"
+              size="sm"
+              onClick={async () => {
+                setIsBulkGenerating(true);
+                let successCount = 0;
+                let errorCount = 0;
+                
+                for (const favorite of favorites) {
+                  try {
+                    const paperData = await utils.client.papers.getById.query({ id: favorite.paperId });
+                    if (paperData?.title) {
+                      await utils.client.favorites.generateTags.mutate({
+                        paperId: favorite.paperId,
+                        title: paperData.title,
+                        abstract: paperData.abstract || undefined,
+                      });
+                      successCount++;
+                    }
+                  } catch (error) {
+                    errorCount++;
+                  }
+                }
+                
+                setIsBulkGenerating(false);
+                utils.favorites.getUserFavorites.invalidate();
+                
+                if (successCount > 0) {
+                  toast.success(`${successCount}件の論文にタグを生成しました`);
+                }
+                if (errorCount > 0) {
+                  toast.error(`${errorCount}件の論文でタグ生成に失敗しました`);
+                }
+              }}
+              disabled={isBulkGenerating}
+            >
+              {isBulkGenerating ? (
+                <>
+                  <Loader2 className="w-4 h-4 mr-2 animate-spin" />
+                  一括生成中...
+                </>
+              ) : (
+                <>
+                  <Sparkles className="w-4 h-4 mr-2" />
+                  全論文のタグを一括生成
+                </>
+              )}
+            </Button>
+          </div>
 
           <div className="space-y-4">
             {favorites.map((favorite) => (
@@ -339,19 +440,23 @@ function FavoriteCard({
           </div>
         </div>
 
-        {paperData?.pdfUrl && (
-          <Button
-            variant="outline"
-            size="sm"
-            onClick={() => {
-              const viewerUrl = `/viewer?url=${encodeURIComponent(paperData.pdfUrl || '')}&title=${encodeURIComponent(paperData.title || '')}`;
-              window.location.href = viewerUrl;
-            }}
-          >
-            <ExternalLink className="w-4 h-4 mr-2" />
-            PDFを開く
-          </Button>
-        )}
+        <div className="flex gap-2 flex-wrap">
+          {paperData?.pdfUrl && (
+            <Button
+              variant="outline"
+              size="sm"
+              onClick={() => {
+                const viewerUrl = `/viewer?url=${encodeURIComponent(paperData.pdfUrl || '')}&title=${encodeURIComponent(paperData.title || '')}`;
+                window.location.href = viewerUrl;
+              }}
+            >
+              <ExternalLink className="w-4 h-4 mr-2" />
+              PDFを開く
+            </Button>
+          )}
+        </div>
+        
+        <RelatedPapersButton paperId={favorite.paperId} />
       </CardContent>
     </Card>
   );
