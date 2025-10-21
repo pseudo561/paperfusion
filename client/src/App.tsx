@@ -11,6 +11,7 @@ import Favorites from "./pages/Favorites";
 import History from "./pages/History";
 import Recommendations from "./pages/Recommendations";
 import Proposals from "./pages/Proposals";
+import PaperViewer from "./pages/PaperViewer";
 
 function Router() {
   return (
@@ -22,6 +23,7 @@ function Router() {
         <Route path="/history" component={History} />
         <Route path="/recommendations" component={Recommendations} />
         <Route path="/proposals" component={Proposals} />
+        <Route path="/viewer" component={PaperViewer} />
         <Route path={"/404"} component={NotFound} />
         {/* Final fallback route */}
         <Route component={NotFound} />

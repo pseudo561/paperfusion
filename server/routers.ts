@@ -265,6 +265,49 @@ export const appRouter = router({
         return { success: true };
       }),
 
+    generateTags: protectedProcedure
+      .input(z.object({ paperId: z.string(), title: z.string(), abstract: z.string().optional() }))
+      .mutation(async ({ ctx, input }) => {
+        const { invokeLLM } = await import("./_core/llm");
+        
+        const prompt = `以下の論文のタイトルと要約から、適切なタグを3-5個生成してください。タグは日本語で、カンマ区切りで返してください。
+
+タイトル: ${input.title}
+要約: ${input.abstract || '要約なし'}
+
+タグ（カンマ区切り）:`;
+
+        try {
+          const response = await invokeLLM({
+            messages: [
+              { role: "system", content: "あなたは学術論文の分類を支援するAIアシスタントです。" },
+              { role: "user", content: prompt },
+            ],
+          });
+
+          const content = response.choices[0]?.message?.content;
+          const tagsText = typeof content === 'string' ? content : "";
+          const tags = tagsText
+            .split(/[,、]/)
+            .map((t: string) => t.trim())
+            .filter((t: string) => t.length > 0)
+            .slice(0, 5);
+
+          const db = await getDb();
+          if (db) {
+            await db
+              .update(favorites)
+              .set({ tags: JSON.stringify(tags) })
+              .where(and(eq(favorites.userId, ctx.user.id), eq(favorites.paperId, input.paperId)));
+          }
+
+          return { success: true, tags };
+        } catch (error) {
+          console.error("Failed to generate tags:", error);
+          throw new Error("タグの生成に失敗しました");
+        }
+      }),
+
     getUserFavorites: protectedProcedure
       .input(z.object({ tag: z.string().optional() }).optional())
       .query(async ({ ctx, input }) => {

@@ -25,6 +25,7 @@ export default function Search() {
   const toggleFavoriteMutation = trpc.favorites.toggle.useMutation({
     onSuccess: (data) => {
       utils.favorites.getUserFavorites.invalidate();
+      utils.favorites.checkFavorite.invalidate();
       if (data.action === 'added') {
         toast.success("お気に入りに追加しました");
       } else {
@@ -227,11 +228,16 @@ function PaperCard({ paper, onToggleFavorite, isTogglingFavorite }: {
         </div>
 
         {paper.pdfUrl && (
-          <Button variant="outline" size="sm" asChild>
-            <a href={paper.pdfUrl} target="_blank" rel="noopener noreferrer">
-              <ExternalLink className="w-4 h-4 mr-2" />
-              PDFを開く
-            </a>
+          <Button
+            variant="outline"
+            size="sm"
+            onClick={() => {
+              const viewerUrl = `/viewer?url=${encodeURIComponent(paper.pdfUrl)}&title=${encodeURIComponent(paper.title)}`;
+              window.location.href = viewerUrl;
+            }}
+          >
+            <ExternalLink className="w-4 h-4 mr-2" />
+            PDFを開く
           </Button>
         )}
       </CardContent>

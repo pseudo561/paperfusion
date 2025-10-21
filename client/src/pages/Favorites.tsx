@@ -161,6 +161,17 @@ function FavoriteCard({
     },
   });
 
+  const generateTagsMutation = trpc.favorites.generateTags.useMutation({
+    onSuccess: (data) => {
+      utils.favorites.getUserFavorites.invalidate();
+      setTags(data.tags);
+      toast.success("タAIグを生成しました");
+    },
+    onError: () => {
+      toast.error("タグの生成に失敗しました");
+    },
+  });
+
   const { data: paperData } = trpc.papers.getById.useQuery(
     { id: favorite.paperId },
     { enabled: !!favorite.paperId }
@@ -226,6 +237,23 @@ function FavoriteCard({
           <div className="flex items-center gap-2">
             <Tag className="w-4 h-4 text-muted-foreground" />
             <span className="text-sm font-medium">タグ</span>
+            <Button
+              variant="ghost"
+              size="sm"
+              className="h-6 px-2 text-xs"
+              onClick={() => {
+                if (paperData?.title) {
+                  generateTagsMutation.mutate({
+                    paperId: favorite.paperId,
+                    title: paperData.title,
+                    abstract: paperData.abstract || undefined,
+                  });
+                }
+              }}
+              disabled={generateTagsMutation.isPending}
+            >
+              {generateTagsMutation.isPending ? "AI生成中..." : "AIタグ生成"}
+            </Button>
             <Dialog open={isEditingTags} onOpenChange={setIsEditingTags}>
               <DialogTrigger asChild>
                 <Button variant="ghost" size="sm" className="h-6 px-2">
@@ -274,11 +302,16 @@ function FavoriteCard({
         </div>
 
         {paperData?.pdfUrl && (
-          <Button variant="outline" size="sm" asChild>
-            <a href={paperData.pdfUrl} target="_blank" rel="noopener noreferrer">
-              <ExternalLink className="w-4 h-4 mr-2" />
-              詳細を見る
-            </a>
+          <Button
+            variant="outline"
+            size="sm"
+            onClick={() => {
+              const viewerUrl = `/viewer?url=${encodeURIComponent(paperData.pdfUrl || '')}&title=${encodeURIComponent(paperData.title || '')}`;
+              window.location.href = viewerUrl;
+            }}
+          >
+            <ExternalLink className="w-4 h-4 mr-2" />
+            PDFを開く
           </Button>
         )}
       </CardContent>
