@@ -51,8 +51,19 @@ export default function Search() {
     setShouldSearch(true);
   };
 
-  const handleToggleFavorite = (paperId: string) => {
-    toggleFavoriteMutation.mutate({ paperId });
+  const handleToggleFavorite = (paperId: string, paper?: any) => {
+    toggleFavoriteMutation.mutate({ 
+      paperId,
+      paperData: paper ? {
+        title: paper.title,
+        authors: paper.authors || [],
+        abstract: paper.abstract,
+        year: paper.publishedDate ? new Date(paper.publishedDate).getFullYear() : undefined,
+        venue: paper.categories?.[0],
+        url: paper.pdfUrl,
+        citationCount: paper.citationsCount,
+      } : undefined
+    });
   };
 
   return (
@@ -161,7 +172,7 @@ export default function Search() {
 
 function PaperCard({ paper, onToggleFavorite, isTogglingFavorite }: {
   paper: any;
-  onToggleFavorite: (paperId: string) => void;
+  onToggleFavorite: (paperId: string, paper?: any) => void;
   isTogglingFavorite: boolean;
 }) {
   const { data: favoriteStatus } = trpc.favorites.checkFavorite.useQuery(
@@ -189,7 +200,7 @@ function PaperCard({ paper, onToggleFavorite, isTogglingFavorite }: {
           <Button
             variant="ghost"
             size="icon"
-            onClick={() => onToggleFavorite(paper.id)}
+            onClick={() => onToggleFavorite(paper.id, paper)}
             disabled={isTogglingFavorite}
             className={isFavorite ? "text-red-500 hover:text-red-600" : ""}
           >

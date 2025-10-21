@@ -5,9 +5,10 @@ import { ExternalLink, Heart, Lightbulb, Loader2 } from "lucide-react";
 import { toast } from "sonner";
 import { useEffect, useState } from "react";
 
-function RecommendationFavoriteButton({ paperId, onToggle, isToggling }: {
+function RecommendationFavoriteButton({ paperId, paper, onToggle, isToggling }: {
   paperId: string;
-  onToggle: (paperId: string) => void;
+  paper?: any;
+  onToggle: (paperId: string, paper?: any) => void;
   isToggling: boolean;
 }) {
   const { data: favoriteStatus } = trpc.favorites.checkFavorite.useQuery(
@@ -21,7 +22,7 @@ function RecommendationFavoriteButton({ paperId, onToggle, isToggling }: {
     <Button
       variant="ghost"
       size="icon"
-      onClick={() => onToggle(paperId)}
+      onClick={() => onToggle(paperId, paper)}
       disabled={isToggling}
       className={isFavorite ? "text-red-500 hover:text-red-600" : ""}
     >
@@ -60,8 +61,19 @@ export default function Recommendations() {
     },
   });
 
-  const handleToggleFavorite = (paperId: string) => {
-    toggleFavoriteMutation.mutate({ paperId });
+  const handleToggleFavorite = (paperId: string, paper?: any) => {
+    toggleFavoriteMutation.mutate({ 
+      paperId,
+      paperData: paper ? {
+        title: paper.title,
+        authors: paper.authors?.map((a: any) => a.name) || [],
+        abstract: paper.abstract,
+        year: paper.year,
+        venue: paper.venue,
+        url: paper.url,
+        citationCount: paper.citationCount,
+      } : undefined
+    });
   };
 
   const handleLoadMore = () => {
@@ -110,6 +122,7 @@ export default function Recommendations() {
                     </div>
                     <RecommendationFavoriteButton
                       paperId={paper.paperId}
+                      paper={paper}
                       onToggle={handleToggleFavorite}
                       isToggling={toggleFavoriteMutation.isPending}
                     />

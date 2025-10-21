@@ -209,11 +209,24 @@ export const appRouter = router({
       }),
 
     toggle: protectedProcedure
-      .input(z.object({ paperId: z.string(), tags: z.array(z.string()).optional() }))
+      .input(z.object({ 
+        paperId: z.string(), 
+        tags: z.array(z.string()).optional(),
+        paperData: z.object({
+          title: z.string(),
+          authors: z.array(z.string()),
+          abstract: z.string().optional(),
+          year: z.number().optional(),
+          venue: z.string().optional(),
+          url: z.string().optional(),
+          citationCount: z.number().optional(),
+        }).optional()
+      }))
       .mutation(async ({ input, ctx }) => {
         const db = await getDb();
         if (!db) throw new Error("Database not available");
         const { randomUUID } = await import("crypto");
+        const { upsertPaper } = await import("./db");
 
         const existing = await db
           .select()
@@ -227,6 +240,22 @@ export const appRouter = router({
             .where(and(eq(favorites.userId, ctx.user.id), eq(favorites.paperId, input.paperId)));
           return { success: true, action: 'removed' as const, isFavorite: false };
         } else {
+          // 論文データが提供されている場合はデータベースに保存
+          if (input.paperData) {
+            await upsertPaper({
+              id: input.paperId,
+              arxivId: null,
+              semanticScholarId: input.paperId,
+              title: input.paperData.title,
+              authors: JSON.stringify(input.paperData.authors),
+              abstract: input.paperData.abstract || null,
+              categories: input.paperData.venue ? JSON.stringify([input.paperData.venue]) : null,
+              publishedDate: input.paperData.year ? new Date(input.paperData.year, 0, 1) : null,
+              pdfUrl: input.paperData.url || null,
+              citationsCount: input.paperData.citationCount || 0,
+            });
+          }
+
           await db.insert(favorites).values({
             id: randomUUID(),
             userId: ctx.user.id,
