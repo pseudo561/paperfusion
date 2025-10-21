@@ -1,6 +1,13 @@
 # PaperFusion - 論文融合・研究提案アプリケーション
 
+[![Built with Manus](https://img.shields.io/badge/Built%20with-Manus-blueviolet?style=for-the-badge&logo=data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iMjQiIGhlaWdodD0iMjQiIHZpZXdCb3g9IjAgMCAyNCAyNCIgZmlsbD0ibm9uZSIgeG1sbnM9Imh0dHA6Ly93d3cudzMub3JnLzIwMDAvc3ZnIj4KPHBhdGggZD0iTTEyIDJMMiAxMkwxMiAyMkwyMiAxMkwxMiAyWiIgZmlsbD0id2hpdGUiLz4KPC9zdmc+)](https://manus.im)
+[![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
+[![TypeScript](https://img.shields.io/badge/TypeScript-5.9.3-blue)](https://www.typescriptlang.org/)
+[![React](https://img.shields.io/badge/React-19.1.1-61dafb)](https://react.dev/)
+
 学術論文を融合させて新しい研究アイデアを生み出すWebアプリケーションです。arXivとSemantic Scholar APIを統合し、AIを活用して複数の論文から革新的な研究提案を生成します。
+
+> **🤖 100% AI生成**: このプロジェクトは[Manus](https://manus.im)を使用して**完全にAIによって設計・開発・デプロイ**されました。人間によるコード記述は一切含まれていません。詳細は[BUILT_WITH_MANUS.md](./BUILT_WITH_MANUS.md)をご覧ください。
 
 ## 主な機能
 
