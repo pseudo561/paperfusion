@@ -346,22 +346,31 @@ export const appRouter = router({
         const db = await getDb();
         if (!db) return [];
 
-        let query = db
+        const results = await db
           .select()
           .from(favorites)
           .where(eq(favorites.userId, ctx.user.id));
 
-        const results = await query;
+        // 論文情報を取得
+        const favoritesWithPapers = await Promise.all(
+          results.map(async (fav) => {
+            const paper = await getPaper(fav.paperId);
+            return {
+              ...fav,
+              paper,
+            };
+          })
+        );
 
         if (input?.tag) {
-          return results.filter(f => {
+          return favoritesWithPapers.filter(f => {
             if (!f.tags) return false;
             const tags = JSON.parse(f.tags as string);
             return tags.includes(input.tag);
           });
         }
 
-        return results;
+        return favoritesWithPapers;
       }),
   }),
 
@@ -475,7 +484,8 @@ ${paperSummaries}
           ],
         });
 
-        const generatedText = response.choices[0]?.message?.content || "研究提案の生成に失敗しました";
+        const messageContent = response.choices[0]?.message?.content;
+        const generatedText = typeof messageContent === 'string' ? messageContent : "研究提案の生成に失敗しました";
 
         // タイトルと内容を分離
         const lines = generatedText.split("\n");

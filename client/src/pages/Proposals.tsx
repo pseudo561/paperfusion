@@ -15,7 +15,7 @@ export default function Proposals() {
   const utils = trpc.useUtils();
 
   // お気に入り論文を取得
-  const { data: favorites, isLoading: favoritesLoading } = trpc.favorites.list.useQuery();
+  const { data: favorites, isLoading: favoritesLoading } = trpc.favorites.getUserFavorites.useQuery();
 
   // 研究提案を取得
   const { data: proposals, isLoading: proposalsLoading } = trpc.proposals.list.useQuery();
@@ -105,7 +105,7 @@ export default function Proposals() {
                       {proposal.title}
                     </CardTitle>
                     <CardDescription className="mt-2">
-                      {new Date(proposal.createdAt).toLocaleDateString("ja-JP")}
+                      {proposal.createdAt ? new Date(proposal.createdAt).toLocaleDateString("ja-JP") : ""}
                     </CardDescription>
                   </div>
                   <Button
@@ -172,7 +172,7 @@ export default function Proposals() {
               </div>
             ) : favorites && favorites.length > 0 ? (
               <div className="space-y-2">
-                {favorites.map((favorite) => {
+                {favorites.map((favorite: any) => {
                   const paper = favorite.paper;
                   if (!paper) return null;
 
@@ -185,6 +185,7 @@ export default function Proposals() {
                       <Checkbox
                         checked={selectedPapers.includes(favorite.paperId)}
                         onCheckedChange={() => handleTogglePaper(favorite.paperId)}
+                        onClick={(e) => e.stopPropagation()}
                       />
                       <div className="flex-1 min-w-0">
                         <h4 className="font-medium text-sm line-clamp-2">{paper.title}</h4>
