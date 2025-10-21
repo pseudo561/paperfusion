@@ -172,10 +172,48 @@ function FavoriteCard({
     },
   });
 
-  const { data: paperData } = trpc.papers.getById.useQuery(
+  const { data: paperData, isLoading: isPaperLoading } = trpc.papers.getById.useQuery(
     { id: favorite.paperId },
     { enabled: !!favorite.paperId }
   );
+
+  // paperDataがnullの場合の処理
+  if (isPaperLoading) {
+    return (
+      <Card className="hover:shadow-md transition-shadow">
+        <CardContent className="py-8 text-center">
+          <Loader2 className="w-6 h-6 animate-spin text-muted-foreground mx-auto" />
+        </CardContent>
+      </Card>
+    );
+  }
+
+  if (!paperData) {
+    return (
+      <Card className="hover:shadow-md transition-shadow">
+        <CardHeader>
+          <div className="flex items-start justify-between gap-4">
+            <div className="flex-1 min-w-0">
+              <CardTitle className="text-lg leading-tight">
+                論文ID: {favorite.paperId}
+              </CardTitle>
+              <CardDescription className="mt-2">
+                論文情報が見つかりません
+              </CardDescription>
+            </div>
+            <Button
+              variant="ghost"
+              size="icon"
+              onClick={() => onRemove(favorite.paperId)}
+              disabled={isRemoving}
+            >
+              <Trash2 className="w-5 h-5 text-destructive" />
+            </Button>
+          </div>
+        </CardHeader>
+      </Card>
+    );
+  }
 
   const handleAddTag = () => {
     if (!newTag.trim()) return;

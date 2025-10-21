@@ -98,7 +98,8 @@ export const appRouter = router({
       .input(z.object({ id: z.string() }))
       .query(async ({ input }) => {
         const { getPaper } = await import("./db");
-        return getPaper(input.id);
+        const paper = await getPaper(input.id);
+        return paper || null;
       }),
 
     getCitations: publicProcedure
