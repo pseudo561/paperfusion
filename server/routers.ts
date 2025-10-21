@@ -2,9 +2,11 @@ import { COOKIE_NAME } from "@shared/const";
 import { getSessionCookieOptions } from "./_core/cookies";
 import { systemRouter } from "./_core/systemRouter";
 import { publicProcedure, protectedProcedure, router } from "./_core/trpc";
-import { getDb } from "./db";
-import { favorites, userRatings } from "../drizzle/schema";
-import { and, eq } from "drizzle-orm";
+import { getDb, getPaper } from "./db";
+import { invokeLLM } from "./_core/llm";
+import { favorites, papers, researchProposals, userRatings } from "../drizzle/schema";
+import { and, desc, eq } from "drizzle-orm";
+import { TRPCError } from "@trpc/server";
 import { z } from "zod";
 
 export const appRouter = router({
@@ -388,24 +390,134 @@ export const appRouter = router({
           return [];
         }
 
-        try {
-          const recommendations = await Promise.all(
-            sourcePaperIds.slice(0, 3).map(paperId => 
-              getRecommendedPapers(paperId, Math.ceil(input.limit / 3))
+        // レート制限対策：順次処理に変更
+        const recommendations: any[] = [];
+        const maxSourcePapers = Math.min(3, sourcePaperIds.length);
+        const perPaperLimit = Math.ceil(input.limit / maxSourcePapers);
+
+        for (let i = 0; i < maxSourcePapers; i++) {
+          try {
+            const paperId = sourcePaperIds[i];
+            console.log(`Fetching recommendations for paper ${i + 1}/${maxSourcePapers}: ${paperId}`);
+            const recs = await getRecommendedPapers(paperId, perPaperLimit);
+            recommendations.push(...recs);
+            console.log(`Got ${recs.length} recommendations`);
+          } catch (error) {
+            console.error(`Failed to get recommendations for paper ${sourcePaperIds[i]}:`, error);
+            // エラーが発生しても続行
+          }
+        }
+
+        // 重複を除去して返却
+        const uniqueRecommendations = Array.from(
+          new Map(
+            recommendations.map(p => [p.paperId, p])
+          ).values()
+        ).slice(0, input.limit);
+
+        console.log(`Returning ${uniqueRecommendations.length} unique recommendations`);
+        return uniqueRecommendations;
+      }),
+  }),
+
+  proposals: router({
+    list: protectedProcedure.query(async ({ ctx }) => {
+      const db = await getDb();
+      if (!db) return [];
+
+      const results = await db
+        .select()
+        .from(researchProposals)
+        .where(eq(researchProposals.userId, ctx.user.id))
+        .orderBy(desc(researchProposals.createdAt));
+
+      return results;
+    }),
+
+    generate: protectedProcedure
+      .input(z.object({
+        paperIds: z.array(z.string()),
+      }))
+      .mutation(async ({ ctx, input }) => {
+        const db = await getDb();
+        if (!db) throw new TRPCError({ code: "INTERNAL_SERVER_ERROR", message: "Database not available" });
+
+        // 選択された論文を取得
+        const papers = await Promise.all(
+          input.paperIds.map(id => getPaper(id))
+        );
+
+        const validPapers = papers.filter(p => p !== undefined);
+
+        if (validPapers.length === 0) {
+          throw new TRPCError({ code: "BAD_REQUEST", message: "No valid papers found" });
+        }
+
+        // LLMで研究テーマを提案
+        const paperSummaries = validPapers.map(p => 
+          `Title: ${p.title}\nAuthors: ${p.authors}\nAbstract: ${p.abstract || "N/A"}`
+        ).join("\n\n---\n\n");
+
+        const proposalPrompt = `以下の論文を分析して、新しい研究テーマを提案してください。
+
+${paperSummaries}
+
+以下の形式で回答してください：
+1. 研究テーマのタイトル（簡潔に）
+2. 提案内容（詳細な説明、300-500字程度）
+3. 関連するオープンプロブレム（3-5個）
+4. 研究の方向性と期待される貢献`;
+
+        const response = await invokeLLM({
+          messages: [
+            { role: "system", content: "あなたは研究者を支援するAIアシスタントです。論文を分析し、新しい研究テーマを提案します。" },
+            { role: "user", content: proposalPrompt },
+          ],
+        });
+
+        const generatedText = response.choices[0]?.message?.content || "研究提案の生成に失敗しました";
+
+        // タイトルと内容を分離
+        const lines = generatedText.split("\n");
+        const title = lines[0]?.replace(/^1\.\s*/, "").trim() || "新しい研究テーマ";
+        const content = generatedText;
+
+        // オープンプロブレムを抽出
+        const openProblemsMatch = generatedText.match(/3\.\s*関連するオープンプロブレム[\s\S]*?(?=4\.|$)/);
+        const openProblems = openProblemsMatch ? openProblemsMatch[0] : null;
+
+        // データベースに保存
+        const id = `proposal_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`;
+        await db.insert(researchProposals).values({
+          id,
+          userId: ctx.user.id,
+          title,
+          description: content,
+          openProblems,
+          sourcePaperIds: input.paperIds.join(","),
+        });
+
+        return { success: true, title, content };
+      }),
+
+    delete: protectedProcedure
+      .input(z.object({
+        id: z.string(),
+      }))
+      .mutation(async ({ ctx, input }) => {
+        const db = await getDb();
+        if (!db) throw new TRPCError({ code: "INTERNAL_SERVER_ERROR", message: "Database not available" });
+
+        await db
+          .delete(researchProposals)
+          .where(
+            and(
+              eq(researchProposals.id, input.id),
+              eq(researchProposals.userId, ctx.user.id)
             )
           );
 
-          const uniqueRecommendations = Array.from(
-            new Map(
-              recommendations.flat().map(p => [p.paperId, p])
-            ).values()
-          ).slice(0, input.limit);
-
-          return uniqueRecommendations;
-        } catch (error) {
-          console.error("Failed to get recommendations:", error);
-          return [];
-        }
+        return { success: true };
       }),
   }),
 });

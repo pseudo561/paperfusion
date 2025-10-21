@@ -1,0 +1,22 @@
+{
+  "query": "SELECT f.paperId, p.id, p.semanticScholarId, p.title FROM favorites f LEFT JOIN papers p ON f.paperId = p.id WHERE f.paperId IN ('4bee2e8f28bb9cc1e0173ae0d68ecc1e2f15e2c3', '58973cb277242e299050e653158fcb209d4a6dc6');",
+  "command": "mysql --batch --raw --column-names --default-character-set=utf8mb4 --host gateway02.us-east-1.prod.aws.tidbcloud.com --port 4000 --user 2GBJjLSwKdAFJgM.root --database hpjFHhMYuRNtXjMLVLUfu8 --execute SELECT f.paperId, p.id, p.semanticScholarId, p.title FROM favorites f LEFT JOIN papers p ON f.paperId = p.id WHERE f.paperId IN ('4bee2e8f28bb9cc1e0173ae0d68ecc1e2f15e2c3', '58973cb277242e299050e653158fcb209d4a6dc6');",
+  "rows": [
+    {
+      "paperId": "4bee2e8f28bb9cc1e0173ae0d68ecc1e2f15e2c3",
+      "id": "NULL",
+      "semanticScholarId": "NULL",
+      "title": "NULL"
+    },
+    {
+      "paperId": "58973cb277242e299050e653158fcb209d4a6dc6",
+      "id": "NULL",
+      "semanticScholarId": "NULL",
+      "title": "NULL"
+    }
+  ],
+  "messages": [],
+  "stdout": "paperId\tid\tsemanticScholarId\ttitle\n4bee2e8f28bb9cc1e0173ae0d68ecc1e2f15e2c3\tNULL\tNULL\tNULL\n58973cb277242e299050e653158fcb209d4a6dc6\tNULL\tNULL\tNULL\n",
+  "stderr": "",
+  "execution_time_ms": 1623
+}

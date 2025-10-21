@@ -106,6 +106,9 @@ export async function getPaperReferences(
   }
 }
 
+// レート制限対策のための遅延関数
+const delay = (ms: number) => new Promise(resolve => setTimeout(resolve, ms));
+
 export async function getRecommendedPapers(
   paperId: string,
   limit = 10
@@ -117,6 +120,10 @@ export async function getRecommendedPapers(
     // arXiv IDの場合は変換
     if (paperId.includes('v') || paperId.match(/^\d{4}\.\d{5}$/)) {
       const arxivId = paperId.replace(/v\d+$/, ''); // v1等のバージョンを削除
+      
+      // レート制限対策：リクエスト間に遅延を追加
+      await delay(1000);
+      
       const paperResponse = await axios.get(
         `${SEMANTIC_SCHOLAR_API_BASE}/paper/ARXIV:${arxivId}?fields=paperId`
       );
@@ -127,14 +134,21 @@ export async function getRecommendedPapers(
       }
     }
 
+    // レート制限対策：リクエスト間に遅延を追加
+    await delay(1000);
+
     // 正しいエンドポイントを使用
     const response = await axios.get(
       `https://api.semanticscholar.org/recommendations/v1/papers/forpaper/${semanticScholarId}?fields=${DEFAULT_FIELDS}&limit=${limit}`
     );
 
     return response.data?.recommendedPapers || [];
-  } catch (error) {
-    console.error("Error fetching recommendations:", error);
+  } catch (error: any) {
+    if (error.response?.status === 429) {
+      console.error("Rate limit exceeded for Semantic Scholar API");
+    } else {
+      console.error("Error fetching recommendations:", error);
+    }
     return [];
   }
 }

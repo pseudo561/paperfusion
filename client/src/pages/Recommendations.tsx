@@ -1,9 +1,10 @@
-import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
+import { Button } from "@/components/ui/button";
 import { trpc } from "@/lib/trpc";
 import { ExternalLink, Heart, Lightbulb, Loader2 } from "lucide-react";
 import { toast } from "sonner";
 import { useEffect, useState } from "react";
+import { useAuth } from "@/_core/hooks/useAuth";
 
 function RecommendationFavoriteButton({ paperId, paper, onToggle, isToggling }: {
   paperId: string;
@@ -35,10 +36,25 @@ export default function Recommendations() {
   const utils = trpc.useUtils();
   const [displayCount, setDisplayCount] = useState(10);
   const [allRecommendations, setAllRecommendations] = useState<any[]>([]);
+  const { user, isAuthenticated, loading: authLoading } = useAuth();
 
-  const { data: recommendations, isLoading } = trpc.recommendations.getForUser.useQuery({
+  // デバッグ情報
+  useEffect(() => {
+    console.log('[Recommendations] Auth state:', { isAuthenticated, authLoading, user: user?.id });
+  }, [isAuthenticated, authLoading, user]);
+
+  const { data: recommendations, isLoading, error } = trpc.recommendations.getForUser.useQuery({
     limit: 50, // より多くの推薦を取得
+  }, {
+    enabled: true, // 一時的に認証チェックを無効化
+    retry: 1,
+    staleTime: 5 * 60 * 1000, // 5分間キャッシュ
   });
+
+  // デバッグ情報
+  useEffect(() => {
+    console.log('[Recommendations] Query state:', { isLoading, error: error?.message, dataLength: recommendations?.length });
+  }, [isLoading, error, recommendations]);
 
   useEffect(() => {
     if (recommendations) {
@@ -80,10 +96,40 @@ export default function Recommendations() {
     setDisplayCount((prev) => Math.min(prev + 10, allRecommendations.length));
   };
 
-  if (isLoading) {
+  if (authLoading || isLoading) {
     return (
-      <div className="flex items-center justify-center py-12">
+      <div className="flex flex-col items-center justify-center py-12 space-y-4">
         <Loader2 className="w-8 h-8 animate-spin text-muted-foreground" />
+        <p className="text-muted-foreground">推薦論文を読み込んでいます...</p>
+      </div>
+    );
+  }
+
+  if (error) {
+    return (
+      <div className="space-y-6">
+        <div>
+          <h1 className="text-3xl font-bold text-foreground">AIレコメンド</h1>
+          <p className="text-muted-foreground mt-2">
+            お気に入りや評価に基づいて、興味のある論文を推薦します
+          </p>
+        </div>
+        <Card>
+          <CardContent className="py-12 text-center">
+            <p className="text-red-500 font-medium mb-2">推薦論文の取得に失敗しました</p>
+            <p className="text-sm text-muted-foreground">
+              APIのレート制限に達している可能性があります。<br />
+              しばらく待ってから再度お試しください。
+            </p>
+            <Button
+              variant="outline"
+              className="mt-4"
+              onClick={() => window.location.reload()}
+            >
+              ページを再読み込み
+            </Button>
+          </CardContent>
+        </Card>
       </div>
     );
   }
