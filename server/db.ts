@@ -110,7 +110,14 @@ export async function getPaper(id: string) {
   const db = await getDb();
   if (!db) return undefined;
 
-  const result = await db.select().from(papers).where(eq(papers.id, id)).limit(1);
+  // まずidで検索
+  let result = await db.select().from(papers).where(eq(papers.id, id)).limit(1);
+  
+  // 見つからない場合はsemanticScholarIdで検索
+  if (result.length === 0) {
+    result = await db.select().from(papers).where(eq(papers.semanticScholarId, id)).limit(1);
+  }
+  
   return result.length > 0 ? result[0] : undefined;
 }
 

@@ -1,0 +1,80 @@
+{
+  "query": "SELECT id, arxivId, semanticScholarId, title, LEFT(abstract, 50) as abstract_preview FROM papers LIMIT 10;",
+  "command": "mysql --batch --raw --column-names --default-character-set=utf8mb4 --host gateway02.us-east-1.prod.aws.tidbcloud.com --port 4000 --user 2GBJjLSwKdAFJgM.root --database hpjFHhMYuRNtXjMLVLUfu8 --execute SELECT id, arxivId, semanticScholarId, title, LEFT(abstract, 50) as abstract_preview FROM papers LIMIT 10;",
+  "rows": [
+    {
+      "id": "00574af8ccc513da8c32be73187eddb14fc6166a",
+      "arxivId": "NULL",
+      "semanticScholarId": "00574af8ccc513da8c32be73187eddb14fc6166a",
+      "title": "Cracking Instance Jigsaw Puzzles: An Alternative to Multiple Instance Learning for Whole Slide Image Analysis",
+      "abstract_preview": "While multiple instance learning (MIL) has shown t"
+    },
+    {
+      "id": "0704.2521v1",
+      "arxivId": "0704.2521v1",
+      "semanticScholarId": "NULL",
+      "title": "Substitution tilings with statistical circular symmetry",
+      "abstract_preview": "Two new series of substitution tilings are introdu"
+    },
+    {
+      "id": "0704.2528v1",
+      "arxivId": "0704.2528v1",
+      "semanticScholarId": "NULL",
+      "title": "Self-dual tilings with respect to star-duality",
+      "abstract_preview": "The concept of star-duality is described for self-"
+    },
+    {
+      "id": "0707.1925v1",
+      "arxivId": "0707.1925v1",
+      "semanticScholarId": "NULL",
+      "title": "A note on minimal matching covered graphs",
+      "abstract_preview": "A graph is called matching covered if for its ever"
+    },
+    {
+      "id": "0708.4288v1",
+      "arxivId": "0708.4288v1",
+      "semanticScholarId": "NULL",
+      "title": "Pattern Matching in Trees and Strings",
+      "abstract_preview": "We study the design of efficient algorithms for co"
+    },
+    {
+      "id": "0711.1819v3",
+      "arxivId": "0711.1819v3",
+      "semanticScholarId": "NULL",
+      "title": "Spotlight Tiling",
+      "abstract_preview": "This article introduces spotlight tiling, a type o"
+    },
+    {
+      "id": "0903.1147v1",
+      "arxivId": "0903.1147v1",
+      "semanticScholarId": "NULL",
+      "title": "Tetravex is NP-complete",
+      "abstract_preview": "Tetravex is a widely played one person computer ga"
+    },
+    {
+      "id": "0903.3419v2",
+      "arxivId": "0903.3419v2",
+      "semanticScholarId": "NULL",
+      "title": "Iwasawa theory for elliptic curves at supersingular primes: A pair of main conjectures",
+      "abstract_preview": "We extend Kobayashi's formulation of Iwasawa theor"
+    },
+    {
+      "id": "1003.3281v2",
+      "arxivId": "1003.3281v2",
+      "semanticScholarId": "NULL",
+      "title": "Cosmic expansion and growth histories in Galileon scalar-tensor models of dark energy",
+      "abstract_preview": "We study models of late-time cosmic acceleration i"
+    },
+    {
+      "id": "1003.4909v1",
+      "arxivId": "1003.4909v1",
+      "semanticScholarId": "NULL",
+      "title": "Aperiodic tilings with one prototile and low complexity atlas matching rules",
+      "abstract_preview": "We give a constructive method that can decrease th"
+    }
+  ],
+  "messages": [],
+  "stdout": "id\tarxivId\tsemanticScholarId\ttitle\tabstract_preview\n00574af8ccc513da8c32be73187eddb14fc6166a\tNULL\t00574af8ccc513da8c32be73187eddb14fc6166a\tCracking Instance Jigsaw Puzzles: An Alternative to Multiple Instance Learning for Whole Slide Image Analysis\tWhile multiple instance learning (MIL) has shown t\n0704.2521v1\t0704.2521v1\tNULL\tSubstitution tilings with statistical circular symmetry\tTwo new series of substitution tilings are introdu\n0704.2528v1\t0704.2528v1\tNULL\tSelf-dual tilings with respect to star-duality\tThe concept of star-duality is described for self-\n0707.1925v1\t0707.1925v1\tNULL\tA note on minimal matching covered graphs\tA graph is called matching covered if for its ever\n0708.4288v1\t0708.4288v1\tNULL\tPattern Matching in Trees and Strings\tWe study the design of efficient algorithms for co\n0711.1819v3\t0711.1819v3\tNULL\tSpotlight Tiling\tThis article introduces spotlight tiling, a type o\n0903.1147v1\t0903.1147v1\tNULL\tTetravex is NP-complete\tTetravex is a widely played one person computer ga\n0903.3419v2\t0903.3419v2\tNULL\tIwasawa theory for elliptic curves at supersingular primes: A pair of main conjectures\tWe extend Kobayashi's formulation of Iwasawa theor\n1003.3281v2\t1003.3281v2\tNULL\tCosmic expansion and growth histories in Galileon scalar-tensor models of dark energy\tWe study models of late-time cosmic acceleration i\n1003.4909v1\t1003.4909v1\tNULL\tAperiodic tilings with one prototile and low complexity atlas matching rules\tWe give a constructive method that can decrease th\n",
+  "stderr": "",
+  "execution_time_ms": 1576
+}
