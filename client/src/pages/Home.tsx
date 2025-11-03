@@ -138,7 +138,7 @@ export default function Home() {
             </CardHeader>
             <CardContent>
               <div className="text-3xl font-bold text-foreground">
-                {favorites && favorites.length > 0 ? t('statsAccuracyHigh') : t('statsAccuracyPreparing')}
+                {favorites && favorites.length >= 5 ? t('statsAccuracyHigh') : t('statsAccuracyPreparing')}
               </div>
               <p className="text-xs text-muted-foreground mt-1">
                 {t('statsAccuracyDesc')}
