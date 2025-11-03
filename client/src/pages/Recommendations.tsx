@@ -1,4 +1,5 @@
 import { Button } from "@/components/ui/button";
+import { t } from "@/lib/i18n";
 import { trpc } from "@/lib/trpc";
 import { ExternalLink, Heart, Lightbulb, Loader2 } from "lucide-react";
 import { toast } from "sonner";
@@ -59,13 +60,13 @@ export default function Recommendations() {
       utils.favorites.getUserFavorites.invalidate();
       utils.favorites.checkFavorite.invalidate();
       if (data.action === 'added') {
-        toast.success("お気に入りに追加しました");
+        toast.success(t('toastFavoriteAdded'));
       } else {
-        toast.success("お気に入りから削除しました");
+        toast.success(t('toastFavoriteRemoved'));
       }
     },
     onError: () => {
-      toast.error("操作に失敗しました");
+      toast.error(t('error'));
     },
   });
 
@@ -94,7 +95,7 @@ export default function Recommendations() {
       <div className="flex items-center justify-center min-h-[60vh]">
         <div className="text-center">
           <Loader2 className="w-8 h-8 animate-spin mx-auto mb-4 text-primary" />
-          <p className="text-muted-foreground">認証状態を確認しています...</p>
+          <p className="text-muted-foreground">{t('checking')}</p>
         </div>
       </div>
     );
@@ -106,12 +107,12 @@ export default function Recommendations() {
       <div className="flex items-center justify-center min-h-[60vh]">
         <div className="text-center max-w-md">
           <Lightbulb className="w-16 h-16 mx-auto mb-4 text-muted-foreground" />
-          <h2 className="text-2xl font-bold mb-2">ログインが必要です</h2>
+          <h2 className="text-2xl font-bold mb-2">{t('loginRequired')}</h2>
           <p className="text-muted-foreground mb-6">
-            AIレコメンド機能を使用するには、ログインしてお気に入り論文を追加してください。
+            {t('loginDesc')}
           </p>
           <Button onClick={() => setLocation("/")}>
-            ホームに戻る
+            {t('backToHome')}
           </Button>
         </div>
       </div>
@@ -124,7 +125,7 @@ export default function Recommendations() {
       <div className="flex items-center justify-center min-h-[60vh]">
         <div className="text-center">
           <Loader2 className="w-8 h-8 animate-spin mx-auto mb-4 text-primary" />
-          <p className="text-muted-foreground">推薦論文を読み込んでいます...</p>
+          <p className="text-muted-foreground">{t('recommendationsLoading')}</p>
         </div>
       </div>
     );
@@ -140,16 +141,16 @@ export default function Recommendations() {
               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z" />
             </svg>
           </div>
-          <h2 className="text-2xl font-bold mb-2">エラーが発生しました</h2>
+          <h2 className="text-2xl font-bold mb-2">{t('errorOccurred')}</h2>
           <p className="text-muted-foreground mb-4">
-            {error.message || "推薦論文の取得に失敗しました"}
+            {error.message || t('errorMessage')}
           </p>
           <div className="space-y-2">
             <p className="text-sm text-muted-foreground">
-              お気に入り論文を追加すると、AIが関連する論文を推薦します。
+              {t('noFavoritesForRecommend')}
             </p>
             <Button onClick={() => setLocation("/favorites")}>
-              お気に入りページへ
+              {t('toFavorites')}
             </Button>
           </div>
         </div>
@@ -162,21 +163,21 @@ export default function Recommendations() {
     return (
       <div className="container mx-auto py-8">
         <div className="mb-8">
-          <h1 className="text-3xl font-bold mb-2">AIレコメンド</h1>
+          <h1 className="text-3xl font-bold mb-2">{t('recommendationsTitle')}</h1>
           <p className="text-muted-foreground">
-            お気に入りや評価から興味のある論文を推薦
+            {t('recommendationsDescription')}
           </p>
         </div>
 
         <div className="flex items-center justify-center min-h-[40vh]">
           <div className="text-center max-w-md">
             <Lightbulb className="w-16 h-16 mx-auto mb-4 text-muted-foreground" />
-            <h2 className="text-2xl font-bold mb-2">推薦論文がありません</h2>
+            <h2 className="text-2xl font-bold mb-2">{t('noRecommendations')}</h2>
             <p className="text-muted-foreground mb-6">
-              お気に入りに論文を追加すると、AIが関連する論文を自動的に推薦します。
+              {t('noRecommendationsDesc')}
             </p>
             <Button onClick={() => setLocation("/search")}>
-              論文を検索
+              {t('toSearch')}
             </Button>
           </div>
         </div>
@@ -189,9 +190,9 @@ export default function Recommendations() {
   return (
     <div className="container mx-auto py-8">
       <div className="mb-8">
-        <h1 className="text-3xl font-bold mb-2">AIレコメンド</h1>
+        <h1 className="text-3xl font-bold mb-2">{t('recommendationsTitle')}</h1>
         <p className="text-muted-foreground">
-          お気に入りや評価から興味のある論文を推薦
+          {t('recommendationsDescription')}
         </p>
       </div>
 
@@ -205,7 +206,7 @@ export default function Recommendations() {
               <div className="flex-1">
                 <h3 className="text-xl font-semibold mb-2">{paper.title}</h3>
                 <p className="text-sm text-muted-foreground mb-2">
-                  {paper.authors?.map((a: any) => a.name).join(", ") || "著者不明"}
+                  {paper.authors?.map((a: any) => a.name).join(", ") || t('authorUnknown')}
                 </p>
                 {paper.abstract && (
                   <p className="text-sm text-muted-foreground line-clamp-3 mb-3">
@@ -213,9 +214,9 @@ export default function Recommendations() {
                   </p>
                 )}
                 <div className="flex items-center gap-4 text-sm text-muted-foreground">
-                  {paper.year && <span>{paper.year}年</span>}
+                  {paper.year && <span>{paper.year}{t('yearSuffix')}</span>}
                   {paper.citationCount !== undefined && (
-                    <span>引用数: {paper.citationCount}</span>
+                    <span>{t('citations')}: {paper.citationCount}</span>
                   )}
                   {paper.venue && <span>{paper.venue}</span>}
                 </div>
@@ -245,11 +246,10 @@ export default function Recommendations() {
       {displayCount < allRecommendations.length && (
         <div className="mt-8 text-center">
           <Button onClick={handleLoadMore} variant="outline" size="lg">
-            さらに表示 ({allRecommendations.length - displayCount}件)
+            {t('loadMore')} ({allRecommendations.length - displayCount}{t('loadMoreCount')})
           </Button>
         </div>
       )}
     </div>
   );
 }
-

@@ -4,7 +4,7 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { trpc } from "@/lib/trpc";
-import { getLanguage, t } from "@/lib/i18n";
+import { t } from "@/lib/i18n";
 import { ExternalLink, Heart, Loader2, Search as SearchIcon } from "lucide-react";
 import { useState } from "react";
 import { toast } from "sonner";
@@ -27,11 +27,10 @@ export default function Search() {
     onSuccess: (data) => {
       utils.favorites.getUserFavorites.invalidate();
       utils.favorites.checkFavorite.invalidate();
-      const lang = getLanguage();
       if (data.action === 'added') {
-        toast.success(lang === 'ja' ? 'お気に入りに追加しました' : lang === 'zh' ? '已添加到收藏' : 'Added to favorites');
+        toast.success(t('toastFavoriteAdded'));
       } else {
-        toast.success(lang === 'ja' ? 'お気に入りから削除しました' : lang === 'zh' ? '已从收藏中移除' : 'Removed from favorites');
+        toast.success(t('toastFavoriteRemoved'));
       }
     },
     onError: () => {
@@ -41,8 +40,7 @@ export default function Search() {
 
   const handleSearch = () => {
     if (!query.trim()) {
-      const lang = getLanguage();
-      toast.error(lang === 'ja' ? '検索キーワードを入力してください' : lang === 'zh' ? '请输入搜索关键词' : 'Please enter search keywords');
+      toast.error(t('errorKeywordRequired'));
       return;
     }
 
@@ -72,20 +70,20 @@ export default function Search() {
   return (
     <div className="space-y-6">
       <div>
-        <h1 className="text-3xl font-bold text-foreground">論文検索</h1>
+        <h1 className="text-3xl font-bold text-foreground">{t('searchTitle')}</h1>
         <p className="text-muted-foreground mt-2">
-          arXivとSemantic Scholarから最新の研究論文を検索できます
+          {t('searchDescription')}
         </p>
       </div>
 
       {/* Search Form */}
       <Card>
         <CardHeader>
-          <CardTitle>検索条件</CardTitle>
+          <CardTitle>{t('searchCriteria')}</CardTitle>
         </CardHeader>
         <CardContent className="space-y-4">
           <div className="space-y-2">
-            <Label htmlFor="query">キーワード</Label>
+            <Label htmlFor="query">{t('searchKeyword')}</Label>
             <Input
               id="query"
               placeholder={t('searchPlaceholder')}
@@ -117,12 +115,12 @@ export default function Search() {
             {isSearching ? (
               <>
                 <Loader2 className="w-4 h-4 mr-2 animate-spin" />
-                検索中...
+                {t('searching')}
               </>
             ) : (
               <>
                 <SearchIcon className="w-4 h-4 mr-2" />
-                検索
+                {t('searchButton')}
               </>
             )}
           </Button>
@@ -133,7 +131,7 @@ export default function Search() {
       {searchResults && searchResults.length > 0 && (
         <div className="space-y-4">
           <h2 className="text-2xl font-bold text-foreground">
-            検索結果 ({searchResults.length}件)
+            {t('searchResults')} ({searchResults.length}{t('searchResultsCount')})
           </h2>
 
           <div className="space-y-4">
@@ -153,7 +151,7 @@ export default function Search() {
         <Card>
           <CardContent className="py-12 text-center">
             <p className="text-muted-foreground">
-              検索結果が見つかりませんでした
+              {t('noResults')}
             </p>
           </CardContent>
         </Card>
@@ -164,7 +162,7 @@ export default function Search() {
           <CardContent className="py-12 text-center">
             <SearchIcon className="w-12 h-12 mx-auto text-muted-foreground mb-4" />
             <p className="text-muted-foreground">
-              キーワードを入力して検索を開始してください
+              {t('enterKeyword')}
             </p>
           </CardContent>
         </Card>
@@ -196,8 +194,8 @@ function PaperCard({ paper, onToggleFavorite, isTogglingFavorite }: {
             <CardDescription className="mt-2">
               {Array.isArray(paper.authors)
                 ? paper.authors.slice(0, 3).join(", ")
-                : "著者不明"}
-              {Array.isArray(paper.authors) && paper.authors.length > 3 && " ほか"}
+                : t('authorUnknown')}
+              {Array.isArray(paper.authors) && paper.authors.length > 3 && ` ${t('andOthers')}`}
             </CardDescription>
           </div>
           <Button
@@ -221,11 +219,11 @@ function PaperCard({ paper, onToggleFavorite, isTogglingFavorite }: {
         <div className="flex items-center gap-4 text-sm text-muted-foreground flex-wrap">
           {paper.publishedDate && (
             <span>
-              {new Date(paper.publishedDate).toLocaleDateString("ja-JP")}
+              {new Date(paper.publishedDate).toLocaleDateString()}
             </span>
           )}
           {paper.citationsCount !== undefined && (
-            <span>引用数: {paper.citationsCount}</span>
+            <span>{t('citations')}: {paper.citationsCount}</span>
           )}
           {paper.categories && Array.isArray(paper.categories) && (
             <span className="flex gap-1 flex-wrap">
@@ -251,11 +249,10 @@ function PaperCard({ paper, onToggleFavorite, isTogglingFavorite }: {
             }}
           >
             <ExternalLink className="w-4 h-4 mr-2" />
-            PDFを開く
+            {t('openPdf')}
           </Button>
         )}
       </CardContent>
     </Card>
   );
 }
-
