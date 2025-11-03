@@ -2,6 +2,7 @@ import { useAuth } from "@/_core/hooks/useAuth";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { APP_TITLE } from "@/const";
+import { t } from "@/lib/i18n";
 import { trpc } from "@/lib/trpc";
 import { BookOpen, Heart, History, Lightbulb, Search, TrendingUp } from "lucide-react";
 import { Link } from "wouter";
@@ -19,32 +20,32 @@ export default function Home() {
   const features = [
     {
       icon: Search,
-      title: "論文検索",
-      description: "arXivとSemantic Scholarから最新の論文を検索",
+      title: t('featureSearchTitle'),
+      description: t('featureSearchDesc'),
       link: "/search",
       color: "text-blue-600",
       bgColor: "bg-blue-50",
     },
     {
       icon: Lightbulb,
-      title: "AIレコメンド",
-      description: "お気に入りや評価から興味のある論文を推薦",
+      title: t('featureRecommendTitle'),
+      description: t('featureRecommendDesc'),
       link: "/recommendations",
       color: "text-yellow-600",
       bgColor: "bg-yellow-50",
     },
     {
       icon: Heart,
-      title: "お気に入り管理",
-      description: "重要な論文をブックマークして整理",
+      title: t('featureFavoritesTitle'),
+      description: t('featureFavoritesDesc'),
       link: "/favorites",
       color: "text-red-600",
       bgColor: "bg-red-50",
     },
     {
       icon: TrendingUp,
-      title: "研究テーマ提案",
-      description: "複数の論文から新しい研究アイデアを生成",
+      title: t('featureProposalsTitle'),
+      description: t('featureProposalsDesc'),
       link: "/proposals",
       color: "text-green-600",
       bgColor: "bg-green-50",
@@ -56,14 +57,14 @@ export default function Home() {
       {/* Hero Section */}
       <div className="text-center space-y-4 py-12">
         <h1 className="text-4xl font-bold text-foreground">
-          {APP_TITLE}へようこそ
+          {t('welcomeTitle')}{APP_TITLE}
         </h1>
         <p className="text-xl text-muted-foreground max-w-2xl mx-auto">
-          AI駆動の論文検索・レコメンドプラットフォーム。最新の研究を発見し、新しいアイデアを創出しましょう。
+          {t('homeDescription')}
         </p>
         {isAuthenticated && user && (
           <p className="text-lg text-primary font-medium">
-            こんにちは、{user.name || user.email}さん
+            {t('greeting')}{user.name || user.email}{t('greetingSuffix') !== '' ? t('greetingSuffix') : ''}
           </p>
         )}
       </div>
@@ -100,7 +101,7 @@ export default function Home() {
           <Card>
             <CardHeader className="pb-3">
               <CardTitle className="text-sm font-medium text-muted-foreground">
-                お気に入り
+                {t('statsFavorites')}
               </CardTitle>
             </CardHeader>
             <CardContent>
@@ -108,7 +109,7 @@ export default function Home() {
                 {favorites?.length || 0}
               </div>
               <p className="text-xs text-muted-foreground mt-1">
-                保存された論文
+                {t('statsFavoritesDesc')}
               </p>
             </CardContent>
           </Card>
@@ -116,7 +117,7 @@ export default function Home() {
           <Card>
             <CardHeader className="pb-3">
               <CardTitle className="text-sm font-medium text-muted-foreground">
-                閲覧履歴
+                {t('statsHistory')}
               </CardTitle>
             </CardHeader>
             <CardContent>
@@ -124,7 +125,7 @@ export default function Home() {
                 {history?.length || 0}
               </div>
               <p className="text-xs text-muted-foreground mt-1">
-                最近の閲覧
+                {t('statsHistoryDesc')}
               </p>
             </CardContent>
           </Card>
@@ -132,15 +133,15 @@ export default function Home() {
           <Card>
             <CardHeader className="pb-3">
               <CardTitle className="text-sm font-medium text-muted-foreground">
-                推薦精度
+                {t('statsAccuracy')}
               </CardTitle>
             </CardHeader>
             <CardContent>
               <div className="text-3xl font-bold text-foreground">
-                {favorites && favorites.length > 0 ? "高" : "準備中"}
+                {favorites && favorites.length > 0 ? t('statsAccuracyHigh') : t('statsAccuracyPreparing')}
               </div>
               <p className="text-xs text-muted-foreground mt-1">
-                お気に入りを増やして精度向上
+                {t('statsAccuracyDesc')}
               </p>
             </CardContent>
           </Card>
@@ -150,16 +151,16 @@ export default function Home() {
       {/* CTA Section */}
       <Card className="bg-primary text-primary-foreground">
         <CardHeader>
-          <CardTitle className="text-2xl">今すぐ始めましょう</CardTitle>
+          <CardTitle className="text-2xl">{t('ctaTitle')}</CardTitle>
           <CardDescription className="text-primary-foreground/80">
-            キーワードを入力して、関心のある論文を検索してください
+            {t('ctaDescription')}
           </CardDescription>
         </CardHeader>
         <CardContent>
           <Link href="/search">
             <Button variant="secondary" size="lg" className="w-full md:w-auto">
               <Search className="w-5 h-5 mr-2" />
-              論文を検索
+              {t('ctaSearchButton')}
             </Button>
           </Link>
         </CardContent>
@@ -167,4 +168,3 @@ export default function Home() {
     </div>
   );
 }
-

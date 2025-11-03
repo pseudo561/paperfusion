@@ -147,7 +147,7 @@ export default function Proposals() {
         <Card>
           <CardContent className="py-12 text-center">
             <FileText className="w-12 h-12 mx-auto text-muted-foreground mb-4" />
-            <p className="text-muted-foreground">{t('noProposalsYet')}</p>
+            <p className="text-muted-foreground">{t('noProposals')}</p>
             <p className="text-sm text-muted-foreground mt-2">
               {t('noProposalsDesc')}
             </p>
