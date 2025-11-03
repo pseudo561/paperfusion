@@ -21,15 +21,21 @@ import {
 } from "@/components/ui/sidebar";
 import { APP_LOGO, APP_TITLE, getLoginUrl } from "@/const";
 import { useIsMobile } from "@/hooks/useMobile";
-import { LayoutDashboard, LogOut, PanelLeft, Users } from "lucide-react";
+import { BookOpen, Heart, History, Home, Lightbulb, Search, FileText, LogOut, PanelLeft, Languages } from "lucide-react";
+import { t, getLanguage } from "@/lib/i18n";
+import { LanguageSwitcher } from "@/components/LanguageSwitcher";
 import { CSSProperties, useEffect, useRef, useState } from "react";
 import { useLocation } from "wouter";
 import { DashboardLayoutSkeleton } from './DashboardLayoutSkeleton';
 import { Button } from "./ui/button";
 
-const menuItems = [
-  { icon: LayoutDashboard, label: "Page 1", path: "/" },
-  { icon: Users, label: "Page 2", path: "/some-path" },
+const getMenuItems = () => [
+  { icon: Home, label: t('home'), path: "/" },
+  { icon: Search, label: t('search'), path: "/search" },
+  { icon: Heart, label: t('favorites'), path: "/favorites" },
+  { icon: History, label: t('history'), path: "/history" },
+  { icon: Lightbulb, label: t('recommendations'), path: "/recommendations" },
+  { icon: FileText, label: t('proposals'), path: "/proposals" },
 ];
 
 const SIDEBAR_WIDTH_KEY = "sidebar-width";
@@ -73,7 +79,7 @@ export default function DashboardLayout({
             <div className="text-center space-y-2">
               <h1 className="text-2xl font-bold tracking-tight">{APP_TITLE}</h1>
               <p className="text-sm text-muted-foreground">
-                Please sign in to continue
+                {t('pleaseSignIn')}
               </p>
             </div>
           </div>
@@ -84,7 +90,7 @@ export default function DashboardLayout({
             size="lg"
             className="w-full shadow-lg hover:shadow-xl transition-all"
           >
-            Sign in
+            {t('signIn')}
           </Button>
         </div>
       </div>
@@ -121,6 +127,7 @@ function DashboardLayoutContent({
   const isCollapsed = state === "collapsed";
   const [isResizing, setIsResizing] = useState(false);
   const sidebarRef = useRef<HTMLDivElement>(null);
+  const menuItems = getMenuItems();
   const activeMenuItem = menuItems.find(item => item.path === location);
   const isMobile = useIsMobile();
 
@@ -250,12 +257,15 @@ function DashboardLayoutContent({
                 </button>
               </DropdownMenuTrigger>
               <DropdownMenuContent align="end" className="w-48">
+                <div className="px-2 py-1.5">
+                  <LanguageSwitcher />
+                </div>
                 <DropdownMenuItem
                   onClick={logout}
                   className="cursor-pointer text-destructive focus:text-destructive"
                 >
                   <LogOut className="mr-2 h-4 w-4" />
-                  <span>Sign out</span>
+                  <span>{t('signOut')}</span>
                 </DropdownMenuItem>
               </DropdownMenuContent>
             </DropdownMenu>
