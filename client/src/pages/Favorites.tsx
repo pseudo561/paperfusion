@@ -3,7 +3,7 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/com
 import { Input } from "@/components/ui/input";
 import { Badge } from "@/components/ui/badge";
 import { trpc } from "@/lib/trpc";
-import { getLanguage } from "@/lib/i18n";
+import { getLanguage, t } from "@/lib/i18n";
 import { ExternalLink, Heart, Loader2, Trash2, Tag, X, Plus, Sparkles, Search } from "lucide-react";
 import { useState } from "react";
 import { toast } from "sonner";
@@ -31,12 +31,12 @@ function RelatedPapersButton({ paperId }: { paperId: string }) {
         {isLoading ? (
           <>
             <Loader2 className="w-4 h-4 mr-2 animate-spin" />
-            検索中...
+            {t('relatedSearching')}
           </>
         ) : (
           <>
             <Search className="w-4 h-4 mr-2" />
-            {showRelated ? "関連論文を閉じる" : "関連論文を検索"}
+            {showRelated ? t('relatedClose') : t('relatedSearch')}
           </>
         )}
       </Button>
@@ -45,19 +45,19 @@ function RelatedPapersButton({ paperId }: { paperId: string }) {
         <div className="mt-4 p-4 bg-muted rounded-lg space-y-3 w-full">
           {error && (
             <p className="text-sm text-destructive">
-              関連論文の取得に失敗しました
+              {t('relatedError')}
             </p>
           )}
           
           {!error && !hasAnyRelated && (
             <p className="text-sm text-muted-foreground">
-              関連論文が見つかりませんでした
+              {t('relatedNotFound')}
             </p>
           )}
           
           {hasCitations && (
             <div className="space-y-2">
-              <h4 className="font-medium text-sm">この論文を引用している論文 ({citations.citations.length}件)</h4>
+              <h4 className="font-medium text-sm">{t('citedBy')} ({citations.citations.length}{t('citedByCount')})</h4>
               <div className="space-y-2 max-h-60 overflow-y-auto">
                 {citations.citations.slice(0, 5).map((paper: any, index: number) => (
                   <div key={index} className="text-sm p-2 bg-background rounded border">
@@ -65,11 +65,11 @@ function RelatedPapersButton({ paperId }: { paperId: string }) {
                     {paper.authors && (
                       <p className="text-xs text-muted-foreground mt-1">
                         {paper.authors.slice(0, 2).map((a: any) => a.name).join(", ")}
-                        {paper.authors.length > 2 && " ほか"}
+                        {paper.authors.length > 2 && ` ${t('andOthers')}`}
                       </p>
                     )}
                     {paper.year && (
-                      <p className="text-xs text-muted-foreground">{paper.year}年</p>
+                      <p className="text-xs text-muted-foreground">{paper.year}{t('yearSuffix')}</p>
                     )}
                   </div>
                 ))}
@@ -79,7 +79,7 @@ function RelatedPapersButton({ paperId }: { paperId: string }) {
           
           {hasReferences && (
             <div className="space-y-2">
-              <h4 className="font-medium text-sm">この論文が引用している論文 ({citations.references.length}件)</h4>
+              <h4 className="font-medium text-sm">{t('references')} ({citations.references.length}{t('referencesCount')})</h4>
               <div className="space-y-2 max-h-60 overflow-y-auto">
                 {citations.references.slice(0, 5).map((paper: any, index: number) => (
                   <div key={index} className="text-sm p-2 bg-background rounded border">
@@ -87,11 +87,11 @@ function RelatedPapersButton({ paperId }: { paperId: string }) {
                     {paper.authors && (
                       <p className="text-xs text-muted-foreground mt-1">
                         {paper.authors.slice(0, 2).map((a: any) => a.name).join(", ")}
-                        {paper.authors.length > 2 && " ほか"}
+                        {paper.authors.length > 2 && ` ${t('andOthers')}`}
                       </p>
                     )}
                     {paper.year && (
-                      <p className="text-xs text-muted-foreground">{paper.year}年</p>
+                      <p className="text-xs text-muted-foreground">{paper.year}{t('yearSuffix')}</p>
                     )}
                   </div>
                 ))}
@@ -116,10 +116,10 @@ export default function Favorites() {
   const removeFavoriteMutation = trpc.favorites.remove.useMutation({
     onSuccess: () => {
       utils.favorites.getUserFavorites.invalidate();
-      toast.success("お気に入りから削除しました");
+      toast.success(t('toastFavoriteRemoved'));
     },
     onError: () => {
-      toast.error("削除に失敗しました");
+      toast.error(t('toastRemoveFailed'));
     },
   });
 
@@ -154,9 +154,9 @@ export default function Favorites() {
   return (
     <div className="space-y-6">
       <div>
-        <h1 className="text-3xl font-bold text-foreground">お気に入り</h1>
+        <h1 className="text-3xl font-bold text-foreground">{t('favoritesTitle')}</h1>
         <p className="text-muted-foreground mt-2">
-          保存した論文を管理できます
+          {t('favoritesDescription')}
         </p>
       </div>
 
@@ -164,7 +164,7 @@ export default function Favorites() {
       {allTags.length > 0 && (
         <Card>
           <CardHeader>
-            <CardTitle className="text-sm font-medium">タグでフィルター</CardTitle>
+            <CardTitle className="text-sm font-medium">{t('filterByTag')}</CardTitle>
           </CardHeader>
           <CardContent>
             <div className="flex gap-2 flex-wrap">
@@ -173,7 +173,7 @@ export default function Favorites() {
                 className="cursor-pointer"
                 onClick={() => setSelectedTag(undefined)}
               >
-                すべて
+                {t('all')}
               </Badge>
               {allTags.map((tag) => (
                 <Badge
@@ -194,7 +194,7 @@ export default function Favorites() {
         <div className="space-y-4">
           <div className="flex items-center justify-between">
             <p className="text-sm text-muted-foreground">
-              {favorites.length}件の論文を保存しています
+              {favorites.length}{t('favoritesCount')}
             </p>
             <Button
               variant="outline"
@@ -225,10 +225,10 @@ export default function Favorites() {
                 utils.favorites.getUserFavorites.invalidate();
                 
                 if (successCount > 0) {
-                  toast.success(`${successCount}件の論文にタグを生成しました`);
+                  toast.success(`${successCount}${t('toastBulkGenerated')}`);
                 }
                 if (errorCount > 0) {
-                  toast.error(`${errorCount}件の論文でタグ生成に失敗しました`);
+                  toast.error(`${errorCount}${t('toastBulkGenerateFailed')}`);
                 }
               }}
               disabled={isBulkGenerating}
@@ -236,12 +236,12 @@ export default function Favorites() {
               {isBulkGenerating ? (
                 <>
                   <Loader2 className="w-4 h-4 mr-2 animate-spin" />
-                  一括生成中...
+                  {t('bulkGenerating')}
                 </>
               ) : (
                 <>
                   <Sparkles className="w-4 h-4 mr-2" />
-                  全論文のタグを一括生成
+                  {t('bulkGenerate')}
                 </>
               )}
             </Button>
@@ -264,11 +264,11 @@ export default function Favorites() {
             <Heart className="w-12 h-12 mx-auto text-muted-foreground mb-4" />
             <p className="text-muted-foreground">
               {selectedTag
-                ? `タグ「${selectedTag}」の論文がありません`
-                : "まだお気に入りの論文がありません"}
+                ? `${t('tagPrefix')}${selectedTag}${t('tagSuffix')}${t('noFavoritesWithTag')}`
+                : t('noFavorites')}
             </p>
             <p className="text-sm text-muted-foreground mt-2">
-              検索ページで論文を見つけてお気に入りに追加しましょう
+              {t('noFavoritesDesc')}
             </p>
           </CardContent>
         </Card>
@@ -301,11 +301,11 @@ function FavoriteCard({
   const updateTagsMutation = trpc.favorites.updateTags.useMutation({
     onSuccess: () => {
       utils.favorites.getUserFavorites.invalidate();
-      toast.success("タグを更新しました");
+      toast.success(t('toastTagsUpdated'));
       setIsEditingTags(false);
     },
     onError: () => {
-      toast.error("タグの更新に失敗しました");
+      toast.error(t('toastTagsUpdateFailed'));
     },
   });
 
@@ -313,10 +313,10 @@ function FavoriteCard({
     onSuccess: (data) => {
       utils.favorites.getUserFavorites.invalidate();
       setTags(data.tags);
-      toast.success("タAIグを生成しました");
+      toast.success(t('toastTagsGenerated'));
     },
     onError: () => {
-      toast.error("タグの生成に失敗しました");
+      toast.error(t('toastTagsGenerateFailed'));
     },
   });
 
@@ -343,10 +343,10 @@ function FavoriteCard({
           <div className="flex items-start justify-between gap-4">
             <div className="flex-1 min-w-0">
               <CardTitle className="text-lg leading-tight">
-                論文ID: {favorite.paperId}
+                {t('paperId')}: {favorite.paperId}
               </CardTitle>
               <CardDescription className="mt-2">
-                論文情報が見つかりません
+                {t('paperNotFound')}
               </CardDescription>
             </div>
             <Button
@@ -389,16 +389,16 @@ function FavoriteCard({
         <div className="flex items-start justify-between gap-4">
           <div className="flex-1 min-w-0">
             <CardTitle className="text-lg leading-tight">
-              {paperData?.title || `論文ID: ${favorite.paperId}`}
+              {paperData?.title || `${t('paperId')}: ${favorite.paperId}`}
             </CardTitle>
             <CardDescription className="mt-2">
               {paperData?.authors && typeof paperData.authors === 'string'
                 ? paperData.authors
-                : new Date(favorite.createdAt!).toLocaleDateString("ja-JP", {
+                : new Date(favorite.createdAt!).toLocaleDateString(getLanguage() === 'ja' ? 'ja-JP' : getLanguage() === 'zh' ? 'zh-CN' : 'en-US', {
                     year: "numeric",
                     month: "long",
                     day: "numeric",
-                  }) + "に追加"}
+                  }) + t('addedOn')}
             </CardDescription>
           </div>
           <Button
@@ -422,7 +422,7 @@ function FavoriteCard({
         <div className="space-y-2">
           <div className="flex items-center gap-2">
             <Tag className="w-4 h-4 text-muted-foreground" />
-            <span className="text-sm font-medium">タグ</span>
+            <span className="text-sm font-medium">{t('tags')}</span>
             <Button
               variant="ghost"
               size="sm"
@@ -438,7 +438,7 @@ function FavoriteCard({
               }}
               disabled={generateTagsMutation.isPending}
             >
-              {generateTagsMutation.isPending ? "AI生成中..." : "AIタグ生成"}
+              {generateTagsMutation.isPending ? t('aiGenerating') : t('aiGenerate')}
             </Button>
             <Dialog open={isEditingTags} onOpenChange={setIsEditingTags}>
               <DialogTrigger asChild>
@@ -448,11 +448,11 @@ function FavoriteCard({
               </DialogTrigger>
               <DialogContent>
                 <DialogHeader>
-                  <DialogTitle>タグを追加</DialogTitle>
+                  <DialogTitle>{t('addTag')}</DialogTitle>
                 </DialogHeader>
                 <div className="flex gap-2">
                   <Input
-                    placeholder="新しいタグ"
+                    placeholder={t('newTag')}
                     value={newTag}
                     onChange={(e) => setNewTag(e.target.value)}
                     onKeyDown={(e) => {
@@ -462,7 +462,7 @@ function FavoriteCard({
                     }}
                   />
                   <Button onClick={handleAddTag} disabled={updateTagsMutation.isPending}>
-                    追加
+                    {t('add')}
                   </Button>
                 </div>
               </DialogContent>
@@ -482,7 +482,7 @@ function FavoriteCard({
                 </Badge>
               ))
             ) : (
-              <span className="text-xs text-muted-foreground">タグなし</span>
+              <span className="text-xs text-muted-foreground">{t('noTags')}</span>
             )}
           </div>
         </div>
@@ -498,7 +498,7 @@ function FavoriteCard({
               }}
             >
               <ExternalLink className="w-4 h-4 mr-2" />
-              PDFを開く
+              {t('openPdf')}
             </Button>
           )}
         </div>
@@ -508,4 +508,3 @@ function FavoriteCard({
     </Card>
   );
 }
-
