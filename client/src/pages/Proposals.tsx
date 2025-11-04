@@ -126,7 +126,7 @@ export default function Proposals() {
               </CardHeader>
               <CardContent className="space-y-4">
                 <div>
-                  <h4 className="font-semibold mb-2">提案内容</h4>
+                  <h4 className="font-semibold mb-2">{t('proposalContent')}</h4>
                   <p className="text-sm text-muted-foreground whitespace-pre-wrap">
                     {proposal.description}
                   </p>

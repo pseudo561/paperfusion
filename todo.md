@@ -46,3 +46,6 @@
 
 ## バグ修正
 - [x] Recommendation Accuracyの表示ロジックを修正（１個のお気に入りでHighになる問題）
+
+## 多言語対応の修正
+- [x] Research Proposalsページの"提案内容"ハードコーディングを修正
